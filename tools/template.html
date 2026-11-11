@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel PHOENIX + HYDRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: cabeçalho com resumo do mês, navegação fixa e seções empilhadas (contribuições, caixas, sheltons, BC, dungeon, regras). Tema único escuro, mundo de jogo. */
+:root{
+  --ink:#0d1117;          /* fundo */
+  --panel:#151b24;        /* cartões */
+  --panel-2:#1b2330;      /* cartões elevados / linhas alternadas */
+  --line:#2a3443;         /* bordas e grade */
+  --text:#e8e4da;         /* texto principal, levemente quente */
+  --muted:#93a0b2;        /* texto secundário */
+  --phoenix:#ff7a3d;      /* brasa PHOENIX */
+  --hydra:#35c2b0;        /* verde-água HYDRA */
+  --gold:#e5b94e;         /* moeda / destaque */
+  --ok:#5fcf80; --warn:#f2b441; --bad:#ef5b5b; --off:#6b7686;
+  --display:"Cinzel", "Trajan Pro", Georgia, serif;
+  --body:"Barlow", "Segoe UI", system-ui, sans-serif;
+  --cond:"Barlow Condensed", "Arial Narrow", "Barlow", sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;
+  background-image:radial-gradient(1200px 500px at 10% -10%, rgba(255,122,61,.10), transparent 60%),
+                   radial-gradient(1000px 500px at 100% -5%, rgba(53,194,176,.09), transparent 60%);
+  background-repeat:no-repeat}
+a{color:var(--gold)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h2{font-family:var(--display);font-size:22px;letter-spacing:.04em;color:var(--text)}
+h3{font-family:var(--cond);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* Cabeçalho com a fênix */
+header.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);min-height:420px;display:flex}
+#phoenix{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-fade{position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 18%,rgba(13,17,23,.75) 42%,rgba(13,17,23,0) 66%),linear-gradient(0deg,var(--ink) 0%,rgba(13,17,23,0) 30%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;gap:22px;width:100%;padding-top:40px;padding-bottom:26px}
+.brand{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.eyebrow{font-family:var(--cond);font-weight:600;letter-spacing:.22em;text-transform:uppercase;font-size:13px;color:var(--gold)}
+.brand h1{font-family:var(--display);font-size:clamp(34px,5.6vw,64px);letter-spacing:.05em;line-height:1.02;margin-top:6px}
+.brand h1 .p{color:var(--phoenix);text-shadow:0 0 28px rgba(255,122,61,.45)} .brand h1 .h{color:var(--hydra);text-shadow:0 0 24px rgba(53,194,176,.3)}
+.brand h1 .amp{color:var(--muted);font-size:.5em;vertical-align:middle;margin:0 .25em}
+.brand .sub{color:var(--muted);margin-top:8px;max-width:46ch}
+.stamp{font-family:var(--cond);font-size:14px;color:var(--muted);text-align:right;line-height:1.35;background:rgba(13,17,23,.6);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stamp b{color:var(--text);font-weight:600}
+@media (max-width:760px){
+  header.hero{min-height:460px}
+  .hero-fade{background:linear-gradient(0deg,var(--ink) 30%,rgba(13,17,23,.55) 55%,rgba(13,17,23,0) 80%)}
+  .stamp{text-align:left}
+}
+
+/* Navegação */
+nav{position:sticky;top:0;z-index:5;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{font-family:var(--cond);font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap}
+nav a:hover,nav a:focus-visible{color:var(--text);background:var(--panel-2);outline:none}
+
+section{padding:34px 0 8px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px}
+.sec-head p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+
+/* Cartões */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.grid{display:grid;gap:14px}
+.tiles{grid-template-columns:repeat(3,1fr)}
+@media (max-width:860px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile .label{font-family:var(--cond);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.tile .big{font-family:var(--cond);font-weight:700;font-size:38px;line-height:1.05;margin-top:4px}
+.tile .big small{font-size:18px;color:var(--muted);font-weight:600;margin-left:4px}
+.tile .foot{color:var(--muted);font-size:13px;margin-top:6px}
+.tile.goldc{border-top:3px solid var(--gold)} .tile.coinc{border-top:3px solid #9fb4ff}
+.tile.okc{border-top:3px solid var(--ok)} .tile.shc{border-top:3px solid #c08cff}
+.bar{height:8px;background:var(--panel-2);border-radius:99px;overflow:hidden;margin-top:10px;display:flex}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* Chips de status */
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.06em;
+  padding:2px 9px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-QUITADO{color:var(--ok)} .s-PARCIAL{color:var(--warn)} .s-PENDENTE{color:var(--bad)} .s-ISENTO{color:var(--off)}
+.clan{font-family:var(--cond);font-weight:700;font-size:12px;letter-spacing:.1em;padding:1px 7px;border-radius:4px}
+.clan.PHOENIX{background:rgba(255,122,61,.15);color:var(--phoenix)}
+.clan.HYDRA{background:rgba(53,194,176,.15);color:var(--hydra)}
+.tag-out{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:0 6px}
+
+/* Filtros */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.fbtn{font-family:var(--cond);font-weight:600;font-size:14px;letter-spacing:.05em;background:var(--panel);color:var(--muted);
+  border:1px solid var(--line);border-radius:99px;padding:5px 13px;cursor:pointer}
+.fbtn:hover{color:var(--text);border-color:var(--muted)}
+.fbtn[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+.fbtn:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 14px;font:inherit;min-width:200px;flex:1;max-width:280px}
+
+/* Cartões de player */
+.players{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.pc{display:flex;flex-direction:column;gap:10px;border-left:4px solid var(--line)}
+.pc.st-QUITADO{border-left-color:var(--ok)} .pc.st-PARCIAL{border-left-color:var(--warn)} .pc.st-PENDENTE{border-left-color:var(--bad)} .pc.st-ISENTO{border-left-color:var(--off)}
+.pc .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pc .name{font-weight:700;font-size:17px;line-height:1.2;word-break:break-word}
+.pc .meta{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.res{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:13px}
+.res .k{color:var(--muted);font-family:var(--cond);font-weight:600;letter-spacing:.04em}
+.res .mini{height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.res .mini span{display:block;height:100%;background:var(--ok)}
+.res .v{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.shdots{display:flex;gap:4px}
+.shdots b{flex:1;font-family:var(--cond);font-size:11px;text-align:center;border-radius:4px;padding:1px 0;background:var(--panel-2);color:var(--muted);font-weight:600}
+.shdots b.full{background:rgba(95,207,128,.18);color:var(--ok)}
+.shdots b.part{background:rgba(242,180,65,.16);color:var(--warn)}
+.falta{font-size:13px;background:rgba(239,91,91,.08);border:1px solid rgba(239,91,91,.25);border-radius:6px;padding:6px 9px;color:#f3b3b3}
+.falta b{color:var(--text)}
+.okline{font-size:13px;color:var(--ok)}
+.empty{color:var(--muted);padding:20px;text-align:center;grid-column:1/-1}
+
+/* Tabelas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-family:var(--cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:12.5px;color:var(--muted);text-align:left;
+  padding:9px 12px;background:var(--panel-2);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+.in{color:var(--ok)} .out{color:var(--bad)}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";} details[open] summary::before{content:"▾ ";}
+details p{margin:6px 0 0;font-size:13px;color:var(--muted);max-width:70ch}
+
+.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{fill:var(--muted);font-family:var(--cond);font-size:12px}
+.scroll{max-height:440px;overflow:auto}
+
+.shgrid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.shc .t{font-family:var(--cond);font-weight:700;font-size:18px}
+.shc .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.shc .row b{color:var(--text);font-variant-numeric:tabular-nums}
+
+.faixa{font-family:var(--cond);font-weight:600;font-size:12.5px;letter-spacing:.04em;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.f-ref{background:rgba(229,185,78,.16);color:var(--gold)}
+.f-ap{background:rgba(95,207,128,.14);color:var(--ok)}
+.f-at{background:rgba(242,180,65,.14);color:var(--warn)}
+.f-di{background:rgba(239,91,91,.14);color:var(--bad)}
+.f-cu{background:var(--panel-2);color:var(--muted)}
+.spark{width:110px;height:28px;display:block}
+.pos{display:inline-block;min-width:26px;text-align:center;font-family:var(--cond);font-weight:700;border-radius:4px;background:var(--panel-2)}
+.pos.top{background:var(--gold);color:var(--ink)}
+
+.buff{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.buff .card{text-align:center;padding:12px}
+.buff .v{font-family:var(--cond);font-weight:700;font-size:28px;color:var(--gold)}
+.buff .l{font-size:13px;color:var(--muted)}
+
+.rules{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rules h3{margin-bottom:6px}
+.rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+.rules li{margin:3px 0} .rules li b{color:var(--text)}
+
+footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
+
+@media (max-width:560px){.stamp{text-align:left}.tile{padding:12px}.tile .big{font-size:26px}.tile .big small{font-size:14px}}
+@media (max-width:420px){.wrap{padding:0 16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <canvas id="phoenix" aria-hidden="true"></canvas>
+  <div class="hero-fade"></div>
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <div class="eyebrow">SkyTale · Gestão do clã</div>
+        <h1><span class="p">PHOENIX</span><span class="amp">&amp;</span><span class="h">HYDRA</span></h1>
+        <div class="sub">Prestação de contas aberta para todos os membros: contribuições, caixas, Bless Castle e Dungeon.</div>
+      </div>
+      <div class="stamp" id="stamp"></div>
+    </div>
+  </div>
+</header>
+<nav aria-label="Seções">
+  <div class="wrap">
+    <a href="#resumo">Resumo</a>
+    <a href="#contribuicoes">Contribuições</a>
+    <a href="#caixas">Caixas</a>
+    <a href="#sheltons">Sheltons</a>
+    <a href="#bless-castle">Bless Castle</a>
+    <a href="#dungeon">Dungeon</a>
+    <a href="#regras">Regras</a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section id="resumo">
+    <div class="sec-head"><div><h2>Resumo do mês</h2><p id="resumo-sub"></p></div></div>
+    <div class="grid tiles" id="tiles"></div>
+  </section>
+
+  <section id="contribuicoes">
+    <div class="sec-head">
+      <div><h2>Contribuições</h2><p>Situação de cada membro na mensalidade do mês. O que falta aparece em vermelho no cartão.</p></div>
+    </div>
+    <div class="filters" role="group" aria-label="Filtrar contribuições">
+      <button class="fbtn" data-f="all" aria-pressed="true">Todos</button>
+      <button class="fbtn" data-f="PHOENIX" aria-pressed="false">PHOENIX</button>
+      <button class="fbtn" data-f="HYDRA" aria-pressed="false">HYDRA</button>
+      <button class="fbtn" data-f="QUITADO" aria-pressed="false">Quitados</button>
+      <button class="fbtn" data-f="PARCIAL" aria-pressed="false">Parciais</button>
+      <button class="fbtn" data-f="PENDENTE" aria-pressed="false">Pendentes</button>
+      <label class="small muted" for="busca" style="position:absolute;left:-9999px">Buscar nick</label>
+      <input class="search" id="busca" type="search" placeholder="Buscar nick…" autocomplete="off">
+    </div>
+    <div class="grid players" id="players"></div>
+  </section>
+
+  <section id="caixas">
+    <div class="sec-head"><div><h2>Caixas da tag</h2><p>Todo movimento de Gold e Coins, com data, responsável e justificativa. Clique em "detalhes" para ler a observação completa.</p></div></div>
+    <div class="grid two">
+      <div class="card">
+        <h3>Caixa Gold · saldo ao longo do tempo (kk)</h3>
+        <div class="chart" id="chart-gold"></div>
+      </div>
+      <div class="card">
+        <h3>Caixa Coins · saldo ao longo do tempo</h3>
+        <div class="chart" id="chart-coins"></div>
+      </div>
+    </div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">Extrato Gold</h3><div class="tbl-wrap scroll" id="ext-gold"></div></div>
+      <div><h3 style="margin-bottom:8px">Extrato Coins</h3><div class="tbl-wrap scroll" id="ext-coins"></div></div>
+    </div>
+  </section>
+
+  <section id="sheltons">
+    <div class="sec-head"><div><h2>Sheltons</h2><p>Quanto foi devido e entregue de cada tipo no mês, o que saiu do baú para as Dungeons e as doações.</p></div></div>
+    <div class="grid shgrid" id="sh-types"></div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">Saídas do baú</h3><div class="tbl-wrap scroll" id="sh-saidas"></div></div>
+      <div><h3 style="margin-bottom:8px">Doações</h3><div class="tbl-wrap" id="sh-doacoes"></div></div>
+    </div>
+  </section>
+
+  <section id="bless-castle">
+    <div class="sec-head"><div><h2>Bless Castle</h2><p>Pontuação oficial de cada edição (PDF do jogo). A média considera só o elenco atual da PHOENIX.</p></div></div>
+    <div class="grid two">
+      <div class="card"><h3>Média do elenco por edição</h3><div class="chart" id="chart-bc"></div></div>
+      <div class="card"><h3>Top 5 da última edição</h3><div id="bc-top"></div></div>
+    </div>
+    <h3 style="margin:18px 0 8px">Elenco atual da PHOENIX</h3>
+    <div class="tbl-wrap" id="bc-elenco"></div>
+    <details style="margin-top:12px"><summary>Como a faixa é definida</summary>
+      <p>REFERÊNCIA 50K+ · APERFEIÇOAR 40–50K · ATENÇÃO 30–40K · DIFICULDADE abaixo de 30K, pela média das edições jogadas. Com só 1 BC, o player fica em AMOSTRA CURTA.</p>
+    </details>
+  </section>
+
+  <section id="dungeon">
+    <div class="sec-head"><div><h2>Dungeon</h2><p>Evento semanal: quem vai garante o buff por 7 dias. Frequência contada a partir das DGs registradas de cada clã.</p></div></div>
+    <div class="grid buff" id="buff"></div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">DGs registradas</h3><div class="tbl-wrap" id="dg-hist"></div></div>
+      <div><h3 style="margin-bottom:8px">Frequência dos membros</h3><div class="tbl-wrap scroll" id="dg-freq"></div></div>
+    </div>
+  </section>
+
+  <section id="regras">
+    <div class="sec-head"><div><h2>Regras da contribuição</h2><p>As regras usadas em todos os cálculos desta página.</p></div></div>
+    <div class="grid rules">
+      <div class="card"><h3>Mensalidade</h3><ul id="regra-mens"></ul></div>
+      <div class="card"><h3>Dungeon</h3><ul>
+        <li>Quem vai na DG tira <b>3 de cada Shelton</b> do baú.</li>
+        <li>Quem usa os próprios Sheltons tem a cota <b>compensada</b> na mensalidade.</li>
+        <li>Toda retirada aparece em <b>Saídas do baú</b>.</li></ul></div>
+      <div class="card"><h3>Casos especiais</h3><ul>
+        <li><b>Excedente</b> não abate outro mês nem outro tipo de Shelton.</li>
+        <li><b>Doações</b> entram no baú e não contam como mensalidade.</li>
+        <li><b>Isentos</b>: líderes COMANF, LastKnight e LastPriest.</li>
+        <li>Quem sai da tag e já pagou parte do mês fica <b>encerrado</b> com o que entregou.</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+/* ---------- FÊNIX (ilustração original, desenhada em canvas) ---------- */
+(function(){
+  const cv=document.getElementById("phoenix"); if(!cv||!cv.getContext) return;
+  const ctx=cv.getContext("2d");
+  const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W=0,H=0,dpr=1,embers=[];
+  const rad=d=>d*Math.PI/180;
+  function size(){
+    dpr=Math.min(2,window.devicePixelRatio||1);
+    W=cv.clientWidth; H=cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr;
+    embers=[]; for(let i=0;i<70;i++) embers.push(newEmber(true));
+  }
+  function anchor(){ const narrow=W<760; return {cx: narrow? W*0.5 : W*0.72, cy: narrow? H*0.44 : H*0.62, s: (narrow? Math.min(H*0.0017,W*0.0028) : H*0.0020)}; }
+  function newEmber(init){
+    const a=anchor();
+    return {x:a.cx+(Math.random()-.5)*W*0.45, y: init? Math.random()*H : H+10, r:Math.random()*2+0.6,
+            v:Math.random()*0.6+0.25, d:(Math.random()-.5)*0.3, life:Math.random()};
+  }
+  function flame(bx,by,ang,len,wid,curl,stops){
+    const ux=Math.cos(ang),uy=Math.sin(ang),px=-uy,py=ux;
+    const tx=bx+ux*len+px*curl, ty=by+uy*len+py*curl;
+    const c1x=bx+ux*len*0.42+px*wid, c1y=by+uy*len*0.42+py*wid;
+    const c2x=bx+ux*len*0.55-px*wid*0.55, c2y=by+uy*len*0.55-py*wid*0.55;
+    const g=ctx.createLinearGradient(bx,by,tx,ty);
+    stops.forEach(([o,c])=>g.addColorStop(o,c));
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.quadraticCurveTo(c1x,c1y,tx,ty); ctx.quadraticCurveTo(c2x,c2y,bx,by); ctx.fillStyle=g; ctx.fill();
+  }
+  const HOT=[[0,"rgba(255,246,214,.95)"],[0.25,"rgba(255,196,77,.9)"],[0.6,"rgba(255,110,40,.75)"],[1,"rgba(200,30,20,0)"]];
+  const DEEP=[[0,"rgba(255,150,60,.55)"],[0.5,"rgba(220,60,30,.45)"],[1,"rgba(120,10,30,0)"]];
+  const GOLD=[[0,"rgba(255,250,230,.9)"],[0.4,"rgba(255,214,110,.7)"],[1,"rgba(255,140,40,0)"]];
+  function wing(t,s){
+    // asa direita; a esquerda é espelhada
+    const S={x:10*s,y:-6*s}, Wr={x:92*s,y:-92*s};
+    const N=15;
+    for(let layer=0;layer<3;layer++){
+      for(let i=0;i<N;i++){
+        const f=i/(N-1);
+        const bx=S.x+(Wr.x-S.x)*f, by=S.y+(Wr.y-S.y)*f;
+        const fl=Math.sin(t*2.2+i*0.7+layer)*0.035;
+        let ang=rad(-8-62*f)+fl, len=s*(60+120*Math.pow(f,0.85));
+        if(layer===0){ len*=1.32; ang+=rad(6); flame(bx,by,ang,len,len*0.16,len*0.10,DEEP); }
+        else if(layer===1){ flame(bx,by,ang,len,len*0.14,len*0.12,HOT); }
+        else if(f<0.75){ flame(bx,by,ang-rad(4),len*0.6,len*0.09,len*0.05,GOLD); }
+      }
+    }
+    // penas primárias abertas na ponta
+    for(let k=0;k<7;k++){
+      const fl=Math.sin(t*2+k)*0.04;
+      const ang=rad(-70-14*k)+fl, len=s*(165-12*k);
+      flame(Wr.x,Wr.y,ang,len*1.15,len*0.15,len*0.16,DEEP);
+      flame(Wr.x,Wr.y,ang,len,len*0.13,len*0.18,HOT);
+    }
+  }
+  function draw(t){
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    const {cx,cy,s}=anchor();
+    // halo
+    const halo=ctx.createRadialGradient(cx,cy-20*s,10*s,cx,cy-20*s,260*s);
+    halo.addColorStop(0,"rgba(255,140,50,.30)"); halo.addColorStop(0.5,"rgba(255,90,40,.10)"); halo.addColorStop(1,"rgba(255,90,40,0)");
+    ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.translate(cx,cy); ctx.globalCompositeOperation="lighter";
+    // cauda
+    for(let k=0;k<7;k++){
+      const sw=Math.sin(t*1.6+k*0.9)*0.06, dir=k%2?1:-1;
+      const ang=rad(90+(k-3)*9)+sw, len=s*(150+ (3-Math.abs(k-3))*30);
+      flame(0,34*s,ang,len*1.1,len*0.12,dir*len*0.22,DEEP);
+      flame(0,34*s,ang,len,len*0.1,dir*len*0.25,HOT);
+    }
+    wing(t,s); ctx.save(); ctx.scale(-1,1); wing(t+0.4,s); ctx.restore();
+    ctx.globalCompositeOperation="source-over";
+    // corpo
+    const bg=ctx.createRadialGradient(0,-6*s,2*s,0,6*s,46*s);
+    bg.addColorStop(0,"#fff2c8"); bg.addColorStop(0.35,"#ffbf4a"); bg.addColorStop(0.75,"#f0602a"); bg.addColorStop(1,"#a8241c");
+    ctx.beginPath(); ctx.ellipse(0,8*s,17*s,42*s,0,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
+    // pescoço e cabeça
+    ctx.beginPath(); ctx.moveTo(-9*s,-22*s); ctx.quadraticCurveTo(-4*s,-46*s,2*s,-58*s); ctx.quadraticCurveTo(12*s,-48*s,9*s,-22*s); ctx.closePath(); ctx.fillStyle="#ffb347"; ctx.fill();
+    const hg=ctx.createRadialGradient(4*s,-66*s,1*s,4*s,-62*s,15*s); hg.addColorStop(0,"#fff6dc"); hg.addColorStop(0.6,"#ffc35a"); hg.addColorStop(1,"#e8662c");
+    ctx.beginPath(); ctx.arc(3*s,-63*s,12*s,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+    // bico
+    ctx.beginPath(); ctx.moveTo(13*s,-67*s); ctx.quadraticCurveTo(30*s,-64*s,33*s,-56*s); ctx.quadraticCurveTo(24*s,-59*s,13*s,-59*s); ctx.closePath(); ctx.fillStyle="#3a1a12"; ctx.fill();
+    // olho
+    ctx.beginPath(); ctx.ellipse(7*s,-66*s,2.6*s,2*s,-0.3,0,Math.PI*2); ctx.fillStyle="#2a0d08"; ctx.fill();
+    ctx.beginPath(); ctx.arc(7.8*s,-66.8*s,0.9*s,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+    // crista
+    ctx.globalCompositeOperation="lighter";
+    for(let k=0;k<4;k++){ const sw=Math.sin(t*2.6+k)*0.08; flame(-2*s,-72*s,rad(-120-14*k)+sw,s*(30+k*7),s*5,-s*6,HOT); }
+    ctx.restore();
+    // brasas
+    ctx.globalCompositeOperation="lighter";
+    embers.forEach(e=>{
+      const a=Math.max(0,Math.min(1,(e.y/H)))*0.9;
+      ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,Math.PI*2); ctx.fillStyle=`rgba(255,${150+Math.floor(e.life*80)},70,${a})`; ctx.fill();
+      if(!still){ e.y-=e.v; e.x+=e.d+Math.sin((e.y+e.life*100)/40)*0.2; if(e.y<-10) Object.assign(e,newEmber(false)); }
+    });
+    ctx.globalCompositeOperation="source-over";
+  }
+  let raf=0;
+  function loop(ts){ draw(ts/1000); raf=requestAnimationFrame(loop); }
+  size();
+  if(still){ draw(0.6); } else { raf=requestAnimationFrame(loop); }
+  window.addEventListener("resize",()=>{ size(); if(still) draw(0.6); });
+})();
+
+const DATA = /*DATA*/null;
+
+(function(){
+const D = DATA;
+const SH = D.sheltons;
+const SH_AB = ["R","T","M","D","C"];
+const nf = new Intl.NumberFormat("pt-BR");
+const nf2 = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt = v => nf.format(Math.round(v));
+const kk = v => nf2.format(v);
+const dt = s => s ? s.slice(8,10)+"/"+s.slice(5,7) : "—";
+const dtl = s => s ? s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4) : "—";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sum = a => a.reduce((x,y)=>x+y,0);
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const compNome = (()=>{const [y,m]=D.competencia.split("-");return MESES[+m-1]+" de "+y})();
+const memById = Object.fromEntries(D.membros.map(m=>[m.id,m]));
+
+document.getElementById("stamp").innerHTML =
+  `Competência <b>${esc(compNome)}</b><br>Atualizado em <b>${esc(dtl(D.gerado_em.slice(0,10)))} às ${esc(D.gerado_em.slice(11))}</b>`;
+
+/* ---------- RESUMO ---------- */
+const ob = D.obrigacoes;
+const cobr = ob.filter(o=>o.status!=="ISENTO");
+const cnt = s => cobr.filter(o=>o.status===s).length;
+const nQ=cnt("QUITADO"), nP=cnt("PARCIAL"), nN=cnt("PENDENTE"), nI=ob.length-cobr.length;
+const capSum = (dev,rec) => sum(cobr.map(o=>Math.min(dev(o),rec(o))));
+const goldDev = sum(cobr.map(o=>o.gold_dev)), goldRec = capSum(o=>o.gold_dev,o=>o.gold_rec);
+const coinDev = sum(cobr.map(o=>o.coins_dev)), coinRec = capSum(o=>o.coins_dev,o=>o.coins_rec);
+const shDev = sum(cobr.map(o=>sum(o.sh_dev))), shRec = sum(cobr.map(o=>sum(o.sh_dev.map((v,i)=>Math.min(v,o.sh_rec[i])))));
+const gSaldo = D.caixa_gold.at(-1)?.saldo ?? 0, cSaldo = D.caixa_coins.at(-1)?.saldo ?? 0;
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const ativos = D.membros.filter(m=>m.situacao==="Ativo");
+const nPh = ativos.filter(m=>m.cla==="PHOENIX").length, nHy = ativos.filter(m=>m.cla==="HYDRA").length;
+
+document.getElementById("resumo-sub").textContent =
+  `${ativos.length} membros ativos (PHOENIX ${nPh} · HYDRA ${nHy}). ${cobr.length} obrigações no mês e ${nI} isentos. Os valores arrecadados contam só o que era devido: excedentes, doações e entregas de isentos ficam fora.`;
+
+const tile = (cls,label,big,foot,bar="") => `<div class="card tile ${cls}"><div class="label">${label}</div><div class="big num">${big}</div>${bar}<div class="foot">${foot}</div></div>`;
+const progress = (p,color) => `<div class="bar" role="img" aria-label="${p}%"><span style="width:${Math.min(100,p)}%;background:${color}"></span></div>`;
+document.getElementById("tiles").innerHTML = [
+  tile("goldc","Caixa Gold",`${kk(gSaldo)}<small>kk</small>`,`Saldo após ${D.caixa_gold.length} movimentos`),
+  tile("coinc","Caixa Coins",`${fmt(cSaldo)}`,`Saldo após ${D.caixa_coins.length} movimentos`),
+  tile("okc","Mensalidades quitadas",`${nQ}<small>de ${cobr.length}</small>`,
+    `<span class="s-PARCIAL">${nP} parciais</span> · <span class="s-PENDENTE">${nN} pendentes</span>`,
+    `<div class="bar" role="img" aria-label="${nQ} quitados, ${nP} parciais, ${nN} pendentes"><span style="width:${nQ/cobr.length*100}%;background:var(--ok)"></span><span style="width:${nP/cobr.length*100}%;background:var(--warn)"></span><span style="width:${nN/cobr.length*100}%;background:var(--bad)"></span></div>`),
+  tile("goldc","Gold arrecadado",`${fmt(goldRec)}<small>/ ${fmt(goldDev)} kk</small>`,`${pct(goldRec,goldDev)}% · faltam ${fmt(goldDev-goldRec)} kk`,progress(pct(goldRec,goldDev),"var(--gold)")),
+  tile("shc","Sheltons entregues",`${fmt(shRec)}<small>/ ${fmt(shDev)}</small>`,`${pct(shRec,shDev)}% · faltam ${fmt(shDev-shRec)}`,progress(pct(shRec,shDev),"#c08cff")),
+  tile("coinc","Coins arrecadados",`${fmt(coinRec)}<small>/ ${fmt(coinDev)}</small>`,`${pct(coinRec,coinDev)}% · só PHOENIX paga Coins`,progress(pct(coinRec,coinDev),"#9fb4ff")),
+].join("");
+
+/* ---------- CONTRIBUIÇÕES ---------- */
+const ORD = {PENDENTE:0,PARCIAL:1,QUITADO:2,ISENTO:3};
+function faltaTxt(o){
+  const p=[];
+  if(o.falta_gold>0) p.push(`<b>${kk(o.falta_gold).replace(",00","")}kk</b> Gold`);
+  const fs=o.falta_sh, tot=sum(fs);
+  if(tot>0){
+    if(fs.every(v=>v===fs[0])) p.push(`<b>${fs[0]} de cada</b> Shelton`);
+    else fs.forEach((v,i)=>{ if(v>0) p.push(`<b>${v}</b> ${SH[i]}${v>1?"s":""}`); });
+  }
+  if(o.falta_coins>0) p.push(`<b>${fmt(o.falta_coins)}</b> Coins`);
+  return p.join(" · ");
+}
+function playerCard(o){
+  const saiu = o.situacao && o.situacao!=="Ativo";
+  const cla = o.cla_atual || o.cla;
+  let body="";
+  if(o.status==="ISENTO"){
+    body = `<div class="small muted">Liderança, sem obrigação de mensalidade.</div>`;
+  } else {
+    const gP = o.gold_dev? Math.min(1,o.gold_rec/o.gold_dev):1;
+    const rows = [`<span class="k">Gold</span><span class="mini"><span style="width:${gP*100}%;background:var(--gold)"></span></span><span class="v">${kk(o.gold_rec).replace(",00","")}/${kk(o.gold_dev).replace(",00","")}kk</span>`];
+    if(o.coins_dev>0){
+      const cP=Math.min(1,o.coins_rec/o.coins_dev);
+      rows.push(`<span class="k">Coins</span><span class="mini"><span style="width:${cP*100}%;background:#9fb4ff"></span></span><span class="v">${fmt(Math.min(o.coins_rec,o.coins_dev))}/${fmt(o.coins_dev)}</span>`);
+    }
+    const dots = o.sh_dev.some(v=>v>0) ? `<div class="shdots" aria-label="Sheltons entregues por tipo">${o.sh_dev.map((dv,i)=>{
+        const r=Math.min(o.sh_rec[i],dv); const c = dv===0?"":(r>=dv?"full":(r>0?"part":""));
+        return `<b class="${c}" title="${SH[i]}: ${r} de ${dv}">${SH_AB[i]} ${r}/${dv}</b>`;}).join("")}</div>` : "";
+    const f = faltaTxt(o);
+    body = `<div class="res">${rows.join("")}</div>${dots}` +
+      (f ? `<div class="falta">Falta: ${f}</div>` : `<div class="okline">✓ Mês completo</div>`);
+  }
+  return `<article class="card pc st-${o.status}" data-cla="${esc(o.cla)}" data-st="${o.status}" data-nick="${esc(String(o.nick).toLowerCase())}">
+    <div class="top"><div><div class="name">${esc(o.nick)}</div>
+      <div class="meta"><span class="clan ${esc(o.cla)}">${esc(o.cla)}</span>${o.classe?`<span>${esc(o.classe)}</span>`:""}<span>${esc(o.id)}</span>${saiu?`<span class="tag-out">saiu da tag</span>`:""}</div></div>
+      <span class="pill s-${o.status}">${o.status}</span></div>${body}</article>`;
+}
+const sorted = [...ob].sort((a,b)=>(ORD[a.status]-ORD[b.status]) || String(a.nick).localeCompare(String(b.nick),"pt-BR",{sensitivity:"base"}));
+const playersEl = document.getElementById("players");
+let filt="all", q="";
+function renderPlayers(){
+  const list = sorted.filter(o=>{
+    if(filt==="PHOENIX"||filt==="HYDRA"){ if(o.cla!==filt) return false; }
+    else if(filt!=="all"){ if(o.status!==filt) return false; }
+    return !q || String(o.nick).toLowerCase().includes(q) || String(o.id).toLowerCase().includes(q);
+  });
+  playersEl.innerHTML = list.length ? list.map(playerCard).join("") : `<div class="empty">Nenhum membro encontrado com esse filtro.</div>`;
+}
+document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
+  filt=b.dataset.f; document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); renderPlayers();
+}));
+document.getElementById("busca").addEventListener("input",e=>{q=e.target.value.trim().toLowerCase();renderPlayers();});
+renderPlayers();
+
+/* ---------- GRÁFICO DE LINHA ---------- */
+function lineChart(el, pts, opt){
+  // pts: [{x:label, y:value}]
+  const W=560,H=220,L=48,R=16,T=16,B=30;
+  if(!pts.length){el.innerHTML='<p class="muted small">Sem dados.</p>';return;}
+  const ys=pts.map(p=>p.y); let mx=Math.max(...ys), mn=Math.min(0,...ys);
+  const step = niceStep((mx-mn)/4); mx=Math.ceil(mx/step)*step; mn=Math.floor(mn/step)*step;
+  const xs = i => L + (pts.length===1?(W-L-R)/2: i*(W-L-R)/(pts.length-1));
+  const y = v => T + (H-T-B)*(1-(v-mn)/(mx-mn||1));
+  let g="";
+  for(let v=mn; v<=mx+1e-9; v+=step){ g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${opt.fy(v)}</text>`; }
+  const path = pts.map((p,i)=>`${i?"L":"M"}${xs(i).toFixed(1)},${y(p.y).toFixed(1)}`).join("");
+  const area = path+`L${xs(pts.length-1).toFixed(1)},${y(mn)}L${xs(0).toFixed(1)},${y(mn)}Z`;
+  const every = Math.max(1,Math.ceil(pts.length/7));
+  let lab=""; pts.forEach((p,i)=>{ if(i%every===0||i===pts.length-1) lab+=`<text x="${xs(i)}" y="${H-8}" text-anchor="middle">${esc(p.x)}</text>`; });
+  const last=pts.length-1;
+  const dots = opt.dots ? pts.map((p,i)=>`<circle cx="${xs(i)}" cy="${y(p.y)}" r="3.5" fill="${opt.color}"><title>${esc(p.x)}: ${opt.fy(p.y)}</title></circle>`).join("") : "";
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label)}">
+    <defs><linearGradient id="g-${el.id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${opt.color}" stop-opacity=".35"/><stop offset="1" stop-color="${opt.color}" stop-opacity="0"/></linearGradient></defs>
+    ${g}<path d="${area}" fill="url(#g-${el.id})"/><path d="${path}" fill="none" stroke="${opt.color}" stroke-width="2.2" stroke-linejoin="round"/>
+    ${dots}<circle cx="${xs(last)}" cy="${y(pts[last].y)}" r="5" fill="${opt.color}" stroke="var(--panel)" stroke-width="2"/>
+    <text x="${Math.min(xs(last),W-R)}" y="${y(pts[last].y)-10}" text-anchor="end" style="fill:var(--text);font-weight:700;font-size:13px">${opt.fy(pts[last].y)}</text>
+    ${lab}</svg>`;
+}
+function niceStep(r){ if(r<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(r))); const f=r/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+
+/* ---------- CAIXAS ---------- */
+function dailyLast(rows){ const m=new Map(); rows.forEach(r=>m.set(r.data,r.saldo)); return [...m].map(([d,v])=>({x:dt(d),y:v})); }
+lineChart(document.getElementById("chart-gold"), dailyLast(D.caixa_gold), {color:"var(--gold)",fy:v=>kk(v).replace(",00",""),label:"Saldo do caixa de Gold por dia",dots:true});
+lineChart(document.getElementById("chart-coins"), dailyLast(D.caixa_coins), {color:"#9fb4ff",fy:v=>fmt(v),label:"Saldo do caixa de Coins por dia",dots:true});
+function extrato(rows, fv, hasCat){
+  const tr = [...rows].reverse().map(r=>{
+    const ent = r.tipo==="Entrada";
+    return `<tr><td class="num">${dt(r.data)}</td><td>${esc(r.desc)}<div class="small muted">${esc(r.resp)}${hasCat&&r.cat?" · "+esc(r.cat):""}</div>${r.obs?`<details><summary>detalhes</summary><p>${esc(r.obs)}</p></details>`:""}</td>
+      <td class="r ${ent?"in":"out"}">${ent?"+":"−"}${fv(r.valor)}</td><td class="r">${fv(r.saldo)}</td></tr>`;}).join("");
+  return `<table><thead><tr><th>Data</th><th>Movimento</th><th class="r">Valor</th><th class="r">Saldo</th></tr></thead><tbody>${tr}</tbody></table>`;
+}
+document.getElementById("ext-gold").innerHTML = extrato(D.caixa_gold, kk, true);
+document.getElementById("ext-coins").innerHTML = extrato(D.caixa_coins, fmt, false);
+
+/* ---------- SHELTONS ---------- */
+document.getElementById("sh-types").innerHTML = SH.map((s,i)=>{
+  const dev=sum(cobr.map(o=>o.sh_dev[i])), rec=sum(cobr.map(o=>Math.min(o.sh_dev[i],o.sh_rec[i])));
+  const out=sum(D.saidas_sheltons.filter(x=>x.tipo==="Retirada").map(x=>x.sh[i]));
+  return `<div class="card shc"><div class="t">${s}</div>${progress(pct(rec,dev),"#c08cff")}
+    <div class="row" style="margin-top:8px"><span>Entregue</span><b>${fmt(rec)} / ${fmt(dev)}</b></div>
+    <div class="row"><span>Falta</span><b>${fmt(dev-rec)}</b></div>
+    <div class="row"><span>Saiu p/ DG</span><b>${fmt(out)}</b></div></div>`;}).join("");
+// Saídas agrupadas por finalidade
+const grupos = new Map();
+D.saidas_sheltons.forEach(s=>{ const k=s.fim||"Outros"; if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(s); });
+let shtr="";
+[...grupos].reverse().forEach(([fim,arr])=>{
+  const tot = SH.map((_,i)=>sum(arr.filter(a=>a.tipo==="Retirada").map(a=>a.sh[i])));
+  shtr += `<tr><td colspan="7" style="background:var(--panel-2)"><b>${esc(fim)}</b> <span class="muted small">· ${arr.length} lançamentos · retirado do baú: ${fmt(sum(tot))}</span></td></tr>`;
+  arr.forEach(a=>{ shtr += `<tr><td>${esc(a.nick)}<div class="small muted">${esc(a.tipo)}${a.id?" · "+esc(a.id):""}</div></td>${a.sh.map(v=>`<td class="r">${v||"–"}</td>`).join("")}<td class="r"><b>${sum(a.sh)}</b></td></tr>`; });
+});
+document.getElementById("sh-saidas").innerHTML = `<table><thead><tr><th>Player</th>${SH_AB.map(a=>`<th class="r">${a}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>${shtr}</tbody></table>`;
+const doa = D.recebimentos.filter(r=>r.comp.toUpperCase().startsWith("DOA"));
+document.getElementById("sh-doacoes").innerHTML = doa.length
+  ? `<table><thead><tr><th>Data</th><th>Doador</th>${SH_AB.map(a=>`<th class="r">${a}</th>`).join("")}</tr></thead><tbody>${doa.map(r=>`<tr><td class="num">${dt(r.data)}</td><td>${esc(r.nick)}</td>${r.sh.map(v=>`<td class="r">${v||"–"}</td>`).join("")}</tr>`).join("")}
+     <tr><td colspan="2"><b>Total doado</b></td>${SH.map((_,i)=>`<td class="r"><b>${sum(doa.map(r=>r.sh[i]))||"–"}</b></td>`).join("")}</tr></tbody></table>`
+  : `<p class="muted small" style="padding:12px">Nenhuma doação de Sheltons registrada.</p>`;
+
+/* ---------- BLESS CASTLE ---------- */
+const eds = [...new Set(D.bc.map(b=>b.data))].sort();
+const elenco = ativos.filter(m=>m.cla==="PHOENIX");
+const ptsOf = (id,ed) => sum(D.bc.filter(b=>b.chave===id && b.data===ed).map(b=>b.pontos));
+const faixa = (n,m) => n===0?["SEM REGISTRO","f-cu"]: n<2?["AMOSTRA CURTA","f-cu"]: m<30000?["DIFICULDADE","f-di"]: m<40000?["ATENÇÃO","f-at"]: m<50000?["APERFEIÇOAR","f-ap"]:["REFERÊNCIA 50K+","f-ref"];
+const mediaEd = eds.map(ed=>{ const v=elenco.map(m=>ptsOf(m.id,ed)).filter(x=>x>0); return {x:dt(ed), y: v.length? sum(v)/v.length:0, n:v.length}; });
+lineChart(document.getElementById("chart-bc"), mediaEd, {color:"var(--phoenix)",fy:v=>fmt(v),label:"Média de pontos do elenco PHOENIX por edição do Bless Castle",dots:true});
+const lastEd = eds.at(-1);
+const top = D.bc.filter(b=>b.data===lastEd).sort((a,b)=>b.pontos-a.pontos).slice(0,5);
+const maxTop = top[0]?.pontos||1;
+document.getElementById("bc-top").innerHTML = `<p class="small muted" style="margin:6px 0 10px">Edição de ${dtl(lastEd)} · ${D.bc.filter(b=>b.data===lastEd).length} participantes · média do elenco ${fmt(mediaEd.at(-1)?.y||0)}</p>` +
+  top.map((b,i)=>`<div style="display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;margin:8px 0">
+    <span class="pos ${i===0?"top":""}">${b.pos||i+1}</span>
+    <div><div style="font-weight:600">${esc(memById[b.chave]?.nick||b.nick)} <span class="small muted">${esc(b.classe)}</span></div>
+      <div class="bar" style="margin-top:4px;height:6px"><span style="width:${b.pontos/maxTop*100}%;background:var(--phoenix)"></span></div></div>
+    <b class="num">${fmt(b.pontos)}</b></div>`).join("");
+function spark(vals){
+  const W=110,H=28,p=3; const v=vals.map(x=>x||null); const nz=v.filter(x=>x!==null);
+  if(nz.length<2) return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"></svg>`;
+  const mx=Math.max(...nz), mn=Math.min(...nz);
+  const X=i=>p+i*(W-2*p)/(v.length-1), Y=x=>H-p-(H-2*p)*((x-mn)/((mx-mn)||1));
+  let d="",started=false; v.forEach((x,i)=>{ if(x===null) return; d+=(started?"L":"M")+X(i).toFixed(1)+","+Y(x).toFixed(1); started=true; });
+  const li=v.map((x,i)=>x!==null?i:-1).filter(i=>i>=0).at(-1);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--phoenix)" stroke-width="1.8"/><circle cx="${X(li)}" cy="${Y(v[li])}" r="2.6" fill="var(--phoenix)"/></svg>`;
+}
+const rowsEl = elenco.map(m=>{ const v=eds.map(ed=>ptsOf(m.id,ed)); const pl=v.filter(x=>x>0); const med=pl.length?sum(pl)/pl.length:0; return {m,v,n:pl.length,med}; })
+  .sort((a,b)=>b.med-a.med);
+document.getElementById("bc-elenco").innerHTML = `<table><thead><tr><th>Player</th>${eds.map(e=>`<th class="r">${dt(e)}</th>`).join("")}<th class="r">BCs</th><th class="r">Média</th><th>Evolução</th><th>Faixa</th></tr></thead><tbody>${
+  rowsEl.map(r=>{ const [f,c]=faixa(r.n,r.med); return `<tr><td><b>${esc(r.m.nick)}</b> <span class="small muted">${esc(r.m.classe)}</span></td>${r.v.map(x=>`<td class="r">${x?fmt(x):'<span class="muted">–</span>'}</td>`).join("")}<td class="r">${r.n}</td><td class="r"><b>${r.n?fmt(r.med):"–"}</b></td><td>${spark(r.v)}</td><td><span class="faixa ${c}">${f}</span></td></tr>`;}).join("")
+}<tr><td><b>Média do elenco</b></td>${mediaEd.map(e=>`<td class="r"><b>${e.n?fmt(e.y):"–"}</b></td>`).join("")}<td colspan="4"></td></tr></tbody></table>`;
+
+/* ---------- DUNGEON ---------- */
+document.getElementById("buff").innerHTML = [["+15%","Taxa de drop"],["+10%","Dano em bosses"],["+5%","HP"],["+5%","Mana"],["+5%","Resistência"],["+1","Velocidade"]]
+  .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+const dgs = new Map(); D.dg.forEach(r=>{ const k=r.data+"|"+r.cla; if(!dgs.has(k)) dgs.set(k,[]); dgs.get(k).push(r); });
+document.getElementById("dg-hist").innerHTML = dgs.size
+  ? `<table><thead><tr><th>Data</th><th>Clã</th><th class="r">Presentes</th><th>Quem foi</th></tr></thead><tbody>${[...dgs].reverse().map(([k,arr])=>{const [d,c]=k.split("|");return `<tr><td class="num">${dtl(d)}</td><td><span class="clan ${esc(c)}">${esc(c)}</span></td><td class="r">${arr.length}</td><td class="small">${arr.map(a=>esc(memById[a.chave]?.nick||a.nick)).join(", ")}</td></tr>`;}).join("")}</tbody></table>`
+  : `<p class="muted small" style="padding:12px">Nenhuma DG registrada ainda.</p>`;
+const dgCla = c => new Set(D.dg.filter(r=>r.cla===c).map(r=>r.data)).size;
+const freq = ativos.map(m=>{ const tot=dgCla(m.cla); const pres=new Set(D.dg.filter(r=>r.chave===m.id).map(r=>r.data)).size;
+  const p = tot? pres/tot : null;
+  const sit = !tot ? ["SEM DG NO CLÃ","f-cu"] : pres===0 ? ["NUNCA FOI","f-di"] : p>=.75 ? ["FREQUENTE","f-ap"] : p>=.4 ? ["REGULAR","f-at"] : ["POUCO FREQUENTE","f-di"];
+  return {m,tot,pres,p,sit}; })
+  .sort((a,b)=> (a.m.cla===b.m.cla?0:(a.m.cla==="HYDRA"?-1:1)) || ((b.p??-1)-(a.p??-1)) || a.m.nick.localeCompare(b.m.nick,"pt-BR",{sensitivity:"base"}));
+document.getElementById("dg-freq").innerHTML = `<table><thead><tr><th>Player</th><th>Clã</th><th class="r">Foi</th><th class="r">DGs do clã</th><th>Situação</th></tr></thead><tbody>${
+  freq.map(f=>`<tr><td><b>${esc(f.m.nick)}</b></td><td><span class="clan ${esc(f.m.cla)}">${esc(f.m.cla)}</span></td><td class="r">${f.pres}</td><td class="r">${f.tot}</td><td><span class="faixa ${f.sit[1]}">${f.sit[0]}</span></td></tr>`).join("")}</tbody></table>`;
+
+/* ---------- REGRAS / RODAPÉ ---------- */
+document.getElementById("regra-mens").innerHTML = `<li><b>${fmt(D.config.gold)}kk de Gold</b> por membro.</li><li><b>${fmt(D.config.sheltons)} de cada Shelton</b>: ${SH.join(", ")}.</li><li><b>${fmt(D.config.coins_phoenix)} Coins</b>, só para membros da PHOENIX.</li><li>Prazo e cobrança são definidos pela liderança a cada mês.</li>`;
+document.getElementById("foot").innerHTML = `Dados extraídos da planilha oficial de gestão da tag em ${esc(dtl(D.gerado_em.slice(0,10)))} às ${esc(D.gerado_em.slice(11))}. Encontrou algo errado? Fale com a liderança.`;
+})();
+</script>
+</body>
+</html>
