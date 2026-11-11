@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel PHOENIX + HYDRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: cabeçalho com resumo do mês, navegação fixa e seções empilhadas (contribuições, caixas, sheltons, BC, dungeon, regras). Tema único escuro, mundo de jogo. */
+:root{
+  --ink:#0d1117;          /* fundo */
+  --panel:#151b24;        /* cartões */
+  --panel-2:#1b2330;      /* cartões elevados / linhas alternadas */
+  --line:#2a3443;         /* bordas e grade */
+  --text:#e8e4da;         /* texto principal, levemente quente */
+  --muted:#93a0b2;        /* texto secundário */
+  --phoenix:#ff7a3d;      /* brasa PHOENIX */
+  --hydra:#35c2b0;        /* verde-água HYDRA */
+  --gold:#e5b94e;         /* moeda / destaque */
+  --ok:#5fcf80; --warn:#f2b441; --bad:#ef5b5b; --off:#6b7686;
+  --display:"Cinzel", "Trajan Pro", Georgia, serif;
+  --body:"Barlow", "Segoe UI", system-ui, sans-serif;
+  --cond:"Barlow Condensed", "Arial Narrow", "Barlow", sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;
+  background-image:radial-gradient(1200px 500px at 10% -10%, rgba(255,122,61,.10), transparent 60%),
+                   radial-gradient(1000px 500px at 100% -5%, rgba(53,194,176,.09), transparent 60%);
+  background-repeat:no-repeat}
+a{color:var(--gold)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h2{font-family:var(--display);font-size:22px;letter-spacing:.04em;color:var(--text)}
+h3{font-family:var(--cond);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* Cabeçalho com a fênix */
+header.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);min-height:420px;display:flex}
+#phoenix{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-fade{position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 18%,rgba(13,17,23,.75) 42%,rgba(13,17,23,0) 66%),linear-gradient(0deg,var(--ink) 0%,rgba(13,17,23,0) 30%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;gap:22px;width:100%;padding-top:40px;padding-bottom:26px}
+.brand{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.eyebrow{font-family:var(--cond);font-weight:600;letter-spacing:.22em;text-transform:uppercase;font-size:13px;color:var(--gold)}
+.brand h1{font-family:var(--display);font-size:clamp(34px,5.6vw,64px);letter-spacing:.05em;line-height:1.02;margin-top:6px}
+.brand h1 .p{color:var(--phoenix);text-shadow:0 0 28px rgba(255,122,61,.45)} .brand h1 .h{color:var(--hydra);text-shadow:0 0 24px rgba(53,194,176,.3)}
+.brand h1 .amp{color:var(--muted);font-size:.5em;vertical-align:middle;margin:0 .25em}
+.brand .sub{color:var(--muted);margin-top:8px;max-width:46ch}
+.stamp{font-family:var(--cond);font-size:14px;color:var(--muted);text-align:right;line-height:1.35;background:rgba(13,17,23,.6);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stamp b{color:var(--text);font-weight:600}
+@media (max-width:760px){
+  header.hero{min-height:460px}
+  .hero-fade{background:linear-gradient(0deg,var(--ink) 30%,rgba(13,17,23,.55) 55%,rgba(13,17,23,0) 80%)}
+  .stamp{text-align:left}
+}
+
+/* Navegação */
+nav{position:sticky;top:0;z-index:5;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav a{font-family:var(--cond);font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap}
+nav a:hover,nav a:focus-visible{color:var(--text);background:var(--panel-2);outline:none}
+
+section{padding:34px 0 8px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px}
+.sec-head p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+
+/* Cartões */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.grid{display:grid;gap:14px}
+.tiles{grid-template-columns:repeat(3,1fr)}
+@media (max-width:860px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile .label{font-family:var(--cond);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.tile .big{font-family:var(--cond);font-weight:700;font-size:38px;line-height:1.05;margin-top:4px}
+.tile .big small{font-size:18px;color:var(--muted);font-weight:600;margin-left:4px}
+.tile .foot{color:var(--muted);font-size:13px;margin-top:6px}
+.tile.goldc{border-top:3px solid var(--gold)} .tile.coinc{border-top:3px solid #9fb4ff}
+.tile.okc{border-top:3px solid var(--ok)} .tile.shc{border-top:3px solid #c08cff}
+.bar{height:8px;background:var(--panel-2);border-radius:99px;overflow:hidden;margin-top:10px;display:flex}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* Chips de status */
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.06em;
+  padding:2px 9px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-QUITADO{color:var(--ok)} .s-PARCIAL{color:var(--warn)} .s-PENDENTE{color:var(--bad)} .s-ISENTO{color:var(--off)}
+.clan{font-family:var(--cond);font-weight:700;font-size:12px;letter-spacing:.1em;padding:1px 7px;border-radius:4px}
+.clan.PHOENIX{background:rgba(255,122,61,.15);color:var(--phoenix)}
+.clan.HYDRA{background:rgba(53,194,176,.15);color:var(--hydra)}
+.tag-out{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:0 6px}
+
+/* Filtros */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.fbtn{font-family:var(--cond);font-weight:600;font-size:14px;letter-spacing:.05em;background:var(--panel);color:var(--muted);
+  border:1px solid var(--line);border-radius:99px;padding:5px 13px;cursor:pointer}
+.fbtn:hover{color:var(--text);border-color:var(--muted)}
+.fbtn[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+.fbtn:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 14px;font:inherit;min-width:200px;flex:1;max-width:280px}
+
+/* Cartões de player */
+.players{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.pc{display:flex;flex-direction:column;gap:10px;border-left:4px solid var(--line)}
+.pc.st-QUITADO{border-left-color:var(--ok)} .pc.st-PARCIAL{border-left-color:var(--warn)} .pc.st-PENDENTE{border-left-color:var(--bad)} .pc.st-ISENTO{border-left-color:var(--off)}
+.pc .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pc .name{font-weight:700;font-size:17px;line-height:1.2;word-break:break-word}
+.pc .meta{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.res{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:13px}
+.res .k{color:var(--muted);font-family:var(--cond);font-weight:600;letter-spacing:.04em}
+.res .mini{height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.res .mini span{display:block;height:100%;background:var(--ok)}
+.res .v{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.shdots{display:flex;gap:4px}
+.shdots b{flex:1;font-family:var(--cond);font-size:11px;text-align:center;border-radius:4px;padding:1px 0;background:var(--panel-2);color:var(--muted);font-weight:600}
+.shdots b.full{background:rgba(95,207,128,.18);color:var(--ok)}
+.shdots b.part{background:rgba(242,180,65,.16);color:var(--warn)}
+.falta{font-size:13px;background:rgba(239,91,91,.08);border:1px solid rgba(239,91,91,.25);border-radius:6px;padding:6px 9px;color:#f3b3b3}
+.falta b{color:var(--text)}
+.okline{font-size:13px;color:var(--ok)}
+.empty{color:var(--muted);padding:20px;text-align:center;grid-column:1/-1}
+
+/* Tabelas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-family:var(--cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:12.5px;color:var(--muted);text-align:left;
+  padding:9px 12px;background:var(--panel-2);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+.in{color:var(--ok)} .out{color:var(--bad)}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";} details[open] summary::before{content:"▾ ";}
+details p{margin:6px 0 0;font-size:13px;color:var(--muted);max-width:70ch}
+
+.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{fill:var(--muted);font-family:var(--cond);font-size:12px}
+.scroll{max-height:440px;overflow:auto}
+
+.shgrid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.shc .t{font-family:var(--cond);font-weight:700;font-size:18px}
+.shc .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.shc .row b{color:var(--text);font-variant-numeric:tabular-nums}
+
+.faixa{font-family:var(--cond);font-weight:600;font-size:12.5px;letter-spacing:.04em;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.f-ref{background:rgba(229,185,78,.16);color:var(--gold)}
+.f-ap{background:rgba(95,207,128,.14);color:var(--ok)}
+.f-at{background:rgba(242,180,65,.14);color:var(--warn)}
+.f-di{background:rgba(239,91,91,.14);color:var(--bad)}
+.f-cu{background:var(--panel-2);color:var(--muted)}
+.spark{width:110px;height:28px;display:block}
+.pos{display:inline-block;min-width:26px;text-align:center;font-family:var(--cond);font-weight:700;border-radius:4px;background:var(--panel-2)}
+.pos.top{background:var(--gold);color:var(--ink)}
+
+.buff{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.buff .card{text-align:center;padding:12px}
+.buff .v{font-family:var(--cond);font-weight:700;font-size:28px;color:var(--gold)}
+.buff .l{font-size:13px;color:var(--muted)}
+
+.rules{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rules h3{margin-bottom:6px}
+.rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+.rules li{margin:3px 0} .rules li b{color:var(--text)}
+
+footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
+
+@media (max-width:560px){.stamp{text-align:left}.tile{padding:12px}.tile .big{font-size:26px}.tile .big small{font-size:14px}}
+@media (max-width:420px){.wrap{padding:0 16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <canvas id="phoenix" aria-hidden="true"></canvas>
+  <div class="hero-fade"></div>
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <div class="eyebrow">SkyTale · Gestão do clã</div>
+        <h1><span class="p">PHOENIX</span><span class="amp">&amp;</span><span class="h">HYDRA</span></h1>
+        <div class="sub">Prestação de contas aberta para todos os membros: contribuições, caixas, Bless Castle e Dungeon.</div>
+      </div>
+      <div class="stamp" id="stamp"></div>
+    </div>
+  </div>
+</header>
+<nav aria-label="Seções">
+  <div class="wrap">
+    <a href="#resumo">Resumo</a>
+    <a href="#contribuicoes">Contribuições</a>
+    <a href="#caixas">Caixas</a>
+    <a href="#sheltons">Sheltons</a>
+    <a href="#bless-castle">Bless Castle</a>
+    <a href="#dungeon">Dungeon</a>
+    <a href="#regras">Regras</a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section id="resumo">
+    <div class="sec-head"><div><h2>Resumo do mês</h2><p id="resumo-sub"></p></div></div>
+    <div class="grid tiles" id="tiles"></div>
+  </section>
+
+  <section id="contribuicoes">
+    <div class="sec-head">
+      <div><h2>Contribuições</h2><p>Situação de cada membro na mensalidade do mês. O que falta aparece em vermelho no cartão.</p></div>
+    </div>
+    <div class="filters" role="group" aria-label="Filtrar contribuições">
+      <button class="fbtn" data-f="all" aria-pressed="true">Todos</button>
+      <button class="fbtn" data-f="PHOENIX" aria-pressed="false">PHOENIX</button>
+      <button class="fbtn" data-f="HYDRA" aria-pressed="false">HYDRA</button>
+      <button class="fbtn" data-f="QUITADO" aria-pressed="false">Quitados</button>
+      <button class="fbtn" data-f="PARCIAL" aria-pressed="false">Parciais</button>
+      <button class="fbtn" data-f="PENDENTE" aria-pressed="false">Pendentes</button>
+      <label class="small muted" for="busca" style="position:absolute;left:-9999px">Buscar nick</label>
+      <input class="search" id="busca" type="search" placeholder="Buscar nick…" autocomplete="off">
+    </div>
+    <div class="grid players" id="players"></div>
+  </section>
+
+  <section id="caixas">
+    <div class="sec-head"><div><h2>Caixas da tag</h2><p>Todo movimento de Gold e Coins, com data, responsável e justificativa. Clique em "detalhes" para ler a observação completa.</p></div></div>
+    <div class="grid two">
+      <div class="card">
+        <h3>Caixa Gold · saldo ao longo do tempo (kk)</h3>
+        <div class="chart" id="chart-gold"></div>
+      </div>
+      <div class="card">
+        <h3>Caixa Coins · saldo ao longo do tempo</h3>
+        <div class="chart" id="chart-coins"></div>
+      </div>
+    </div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">Extrato Gold</h3><div class="tbl-wrap scroll" id="ext-gold"></div></div>
+      <div><h3 style="margin-bottom:8px">Extrato Coins</h3><div class="tbl-wrap scroll" id="ext-coins"></div></div>
+    </div>
+  </section>
+
+  <section id="sheltons">
+    <div class="sec-head"><div><h2>Sheltons</h2><p>Quanto foi devido e entregue de cada tipo no mês, o que saiu do baú para as Dungeons e as doações.</p></div></div>
+    <div class="grid shgrid" id="sh-types"></div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">Saídas do baú</h3><div class="tbl-wrap scroll" id="sh-saidas"></div></div>
+      <div><h3 style="margin-bottom:8px">Doações</h3><div class="tbl-wrap" id="sh-doacoes"></div></div>
+    </div>
+  </section>
+
+  <section id="bless-castle">
+    <div class="sec-head"><div><h2>Bless Castle</h2><p>Pontuação oficial de cada edição (PDF do jogo). A média considera só o elenco atual da PHOENIX.</p></div></div>
+    <div class="grid two">
+      <div class="card"><h3>Média do elenco por edição</h3><div class="chart" id="chart-bc"></div></div>
+      <div class="card"><h3>Top 5 da última edição</h3><div id="bc-top"></div></div>
+    </div>
+    <h3 style="margin:18px 0 8px">Elenco atual da PHOENIX</h3>
+    <div class="tbl-wrap" id="bc-elenco"></div>
+    <details style="margin-top:12px"><summary>Como a faixa é definida</summary>
+      <p>REFERÊNCIA 50K+ · APERFEIÇOAR 40–50K · ATENÇÃO 30–40K · DIFICULDADE abaixo de 30K, pela média das edições jogadas. Com só 1 BC, o player fica em AMOSTRA CURTA.</p>
+    </details>
+  </section>
+
+  <section id="dungeon">
+    <div class="sec-head"><div><h2>Dungeon</h2><p>Evento semanal: quem vai garante o buff por 7 dias. Frequência contada a partir das DGs registradas de cada clã.</p></div></div>
+    <div class="grid buff" id="buff"></div>
+    <div class="grid two" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">DGs registradas</h3><div class="tbl-wrap" id="dg-hist"></div></div>
+      <div><h3 style="margin-bottom:8px">Frequência dos membros</h3><div class="tbl-wrap scroll" id="dg-freq"></div></div>
+    </div>
+  </section>
+
+  <section id="regras">
+    <div class="sec-head"><div><h2>Regras da contribuição</h2><p>As regras usadas em todos os cálculos desta página.</p></div></div>
+    <div class="grid rules">
+      <div class="card"><h3>Mensalidade</h3><ul id="regra-mens"></ul></div>
+      <div class="card"><h3>Dungeon</h3><ul>
+        <li>Quem vai na DG tira <b>3 de cada Shelton</b> do baú.</li>
+        <li>Quem usa os próprios Sheltons tem a cota <b>compensada</b> na mensalidade.</li>
+        <li>Toda retirada aparece em <b>Saídas do baú</b>.</li></ul></div>
+      <div class="card"><h3>Casos especiais</h3><ul>
+        <li><b>Excedente</b> não abate outro mês nem outro tipo de Shelton.</li>
+        <li><b>Doações</b> entram no baú e não contam como mensalidade.</li>
+        <li><b>Isentos</b>: líderes COMANF, LastKnight e LastPriest.</li>
+        <li>Quem sai da tag e já pagou parte do mês fica <b>encerrado</b> com o que entregou.</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+/* ---------- FÊNIX (ilustração original, desenhada em canvas) ---------- */
+(function(){
+  const cv=document.getElementById("phoenix"); if(!cv||!cv.getContext) return;
+  const ctx=cv.getContext("2d");
+  const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W=0,H=0,dpr=1,embers=[];
+  const rad=d=>d*Math.PI/180;
+  function size(){
+    dpr=Math.min(2,window.devicePixelRatio||1);
+    W=cv.clientWidth; H=cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr;
+    embers=[]; for(let i=0;i<70;i++) embers.push(newEmber(true));
+  }
+  function anchor(){ const narrow=W<760; return {cx: narrow? W*0.5 : W*0.72, cy: narrow? H*0.44 : H*0.62, s: (narrow? Math.min(H*0.0017,W*0.0028) : H*0.0020)}; }
+  function newEmber(init){
+    const a=anchor();
+    return {x:a.cx+(Math.random()-.5)*W*0.45, y: init? Math.random()*H : H+10, r:Math.random()*2+0.6,
+            v:Math.random()*0.6+0.25, d:(Math.random()-.5)*0.3, life:Math.random()};
+  }
+  function flame(bx,by,ang,len,wid,curl,stops){
+    const ux=Math.cos(ang),uy=Math.sin(ang),px=-uy,py=ux;
+    const tx=bx+ux*len+px*curl, ty=by+uy*len+py*curl;
+    const c1x=bx+ux*len*0.42+px*wid, c1y=by+uy*len*0.42+py*wid;
+    const c2x=bx+ux*len*0.55-px*wid*0.55, c2y=by+uy*len*0.55-py*wid*0.55;
+    const g=ctx.createLinearGradient(bx,by,tx,ty);
+    stops.forEach(([o,c])=>g.addColorStop(o,c));
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.quadraticCurveTo(c1x,c1y,tx,ty); ctx.quadraticCurveTo(c2x,c2y,bx,by); ctx.fillStyle=g; ctx.fill();
+  }
+  const HOT=[[0,"rgba(255,246,214,.95)"],[0.25,"rgba(255,196,77,.9)"],[0.6,"rgba(255,110,40,.75)"],[1,"rgba(200,30,20,0)"]];
+  const DEEP=[[0,"rgba(255,150,60,.55)"],[0.5,"rgba(220,60,30,.45)"],[1,"rgba(120,10,30,0)"]];
+  const GOLD=[[0,"rgba(255,250,230,.9)"],[0.4,"rgba(255,214,110,.7)"],[1,"rgba(255,140,40,0)"]];
+  function wing(t,s){
+    // asa direita; a esquerda é espelhada
+    const S={x:10*s,y:-6*s}, Wr={x:92*s,y:-92*s};
+    const N=15;
+    for(let layer=0;layer<3;layer++){
+      for(let i=0;i<N;i++){
+        const f=i/(N-1);
+        const bx=S.x+(Wr.x-S.x)*f, by=S.y+(Wr.y-S.y)*f;
+        const fl=Math.sin(t*2.2+i*0.7+layer)*0.035;
+        let ang=rad(-8-62*f)+fl, len=s*(60+120*Math.pow(f,0.85));
+        if(layer===0){ len*=1.32; ang+=rad(6); flame(bx,by,ang,len,len*0.16,len*0.10,DEEP); }
+        else if(layer===1){ flame(bx,by,ang,len,len*0.14,len*0.12,HOT); }
+        else if(f<0.75){ flame(bx,by,ang-rad(4),len*0.6,len*0.09,len*0.05,GOLD); }
+      }
+    }
+    // penas primárias abertas na ponta
+    for(let k=0;k<7;k++){
+      const fl=Math.sin(t*2+k)*0.04;
+      const ang=rad(-70-14*k)+fl, len=s*(165-12*k);
+      flame(Wr.x,Wr.y,ang,len*1.15,len*0.15,len*0.16,DEEP);
+      flame(Wr.x,Wr.y,ang,len,len*0.13,len*0.18,HOT);
+    }
+  }
+  function draw(t){
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    const {cx,cy,s}=anchor();
+    // halo
+    const halo=ctx.createRadialGradient(cx,cy-20*s,10*s,cx,cy-20*s,260*s);
+    halo.addColorStop(0,"rgba(255,140,50,.30)"); halo.addColorStop(0.5,"rgba(255,90,40,.10)"); halo.addColorStop(1,"rgba(255,90,40,0)");
+    ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.translate(cx,cy); ctx.globalCompositeOperation="lighter";
+    // cauda
+    for(let k=0;k<7;k++){
+      const sw=Math.sin(t*1.6+k*0.9)*0.06, dir=k%2?1:-1;
+      const ang=rad(90+(k-3)*9)+sw, len=s*(150+ (3-Math.abs(k-3))*30);
+      flame(0,34*s,ang,len*1.1,len*0.12,dir*len*0.22,DEEP);
+      flame(0,34*s,ang,len,len*0.1,dir*len*0.25,HOT);
+    }
+    wing(t,s); ctx.save(); ctx.scale(-1,1); wing(t+0.4,s); ctx.restore();
+    ctx.globalCompositeOperation="source-over";
+    // corpo
+    const bg=ctx.createRadialGradient(0,-6*s,2*s,0,6*s,46*s);
+    bg.addColorStop(0,"#fff2c8"); bg.addColorStop(0.35,"#ffbf4a"); bg.addColorStop(0.75,"#f0602a"); bg.addColorStop(1,"#a8241c");
+    ctx.beginPath(); ctx.ellipse(0,8*s,17*s,42*s,0,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
+    // pescoço e cabeça
+    ctx.beginPath(); ctx.moveTo(-9*s,-22*s); ctx.quadraticCurveTo(-4*s,-46*s,2*s,-58*s); ctx.quadraticCurveTo(12*s,-48*s,9*s,-22*s); ctx.closePath(); ctx.fillStyle="#ffb347"; ctx.fill();
+    const hg=ctx.createRadialGradient(4*s,-66*s,1*s,4*s,-62*s,15*s); hg.addColorStop(0,"#fff6dc"); hg.addColorStop(0.6,"#ffc35a"); hg.addColorStop(1,"#e8662c");
+    ctx.beginPath(); ctx.arc(3*s,-63*s,12*s,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+    // bico
+    ctx.beginPath(); ctx.moveTo(13*s,-67*s); ctx.quadraticCurveTo(30*s,-64*s,33*s,-56*s); ctx.quadraticCurveTo(24*s,-59*s,13*s,-59*s); ctx.closePath(); ctx.fillStyle="#3a1a12"; ctx.fill();
+    // olho
+    ctx.beginPath(); ctx.ellipse(7*s,-66*s,2.6*s,2*s,-0.3,0,Math.PI*2); ctx.fillStyle="#2a0d08"; ctx.fill();
+    ctx.beginPath(); ctx.arc(7.8*s,-66.8*s,0.9*s,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+    // crista
+    ctx.globalCompositeOperation="lighter";
+    for(let k=0;k<4;k++){ const sw=Math.sin(t*2.6+k)*0.08; flame(-2*s,-72*s,rad(-120-14*k)+sw,s*(30+k*7),s*5,-s*6,HOT); }
+    ctx.restore();
+    // brasas
+    ctx.globalCompositeOperation="lighter";
+    embers.forEach(e=>{
+      const a=Math.max(0,Math.min(1,(e.y/H)))*0.9;
+      ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,Math.PI*2); ctx.fillStyle=`rgba(255,${150+Math.floor(e.life*80)},70,${a})`; ctx.fill();
+      if(!still){ e.y-=e.v; e.x+=e.d+Math.sin((e.y+e.life*100)/40)*0.2; if(e.y<-10) Object.assign(e,newEmber(false)); }
+    });
+    ctx.globalCompositeOperation="source-over";
+  }
+  let raf=0;
+  function loop(ts){ draw(ts/1000); raf=requestAnimationFrame(loop); }
+  size();
+  if(still){ draw(0.6); } else { raf=requestAnimationFrame(loop); }
+  window.addEventListener("resize",()=>{ size(); if(still) draw(0.6); });
+})();
+
+const DATA = {"gerado_em": "2026-11-11 15:35", "competencia": "2026-11", "config": {"gold": 20.0, "sheltons": 6.0, "coins_phoenix": 600.0}, "sheltons": ["Raident", "Transparo", "Murki", "Devine", "Celesto"], "membros": [{"id": "P001", "nick": "COMANF", "classe": "KS", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Líder. Isento de contribuição mensal (definido em 05/11/2026)."}, {"id": "P002", "nick": "AuraVortex", "classe": "AS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P003", "nick": "beStr0ng", "classe": "PS", "cla": "", "situacao": "Inativo", "obs": "Personagem vendido. Saiu da tag PHOENIX em 05/11/2026; sem obrigação de novembro/2026. Histórico BC preservado."}, {"id": "P004", "nick": "Cordoba", "classe": "KS", "cla": "", "situacao": "Inativo", "obs": "Mesmo dono da Vivi (H025). Transferido da PHOENIX para HYDRA em 30/10/2026; parou de jogar com o KS em 05/11/2026. Sem obrigação de novembro/2026 (o dono contribui pela Vivi). Histórico BC preservado."}, {"id": "P005", "nick": "DanielRoX", "classe": "PS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P006", "nick": "DarkKnighttt", "classe": "KS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P007", "nick": "Divoom", "classe": "KS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P008", "nick": "EVILDANTE", "classe": "PS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P009", "nick": "GodPvp", "classe": "ATA", "cla": "", "situacao": "Inativo", "obs": "Atalanta vendida. Saiu da tag PHOENIX em 08/11/2026. Novembro/2026 encerrado com o que já tinha pago (20kk Gold e 1.000 Coins); Sheltons dispensados. Histórico BC preservado."}, {"id": "P010", "nick": "Hira", "classe": "ATA", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P011", "nick": "KRONOS", "classe": "FS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P012", "nick": "LastKnight", "classe": "KS", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Identidade confirmada pelo jogador: LastKnight = OPai = L4sT. Consolidar histórico BC sob P012, preservando nicks originais nos PDFs. Líder. Isento de contribuição mensal (definido em 05/11/2026); entrega por livre e espontânea vontade."}, {"id": "P013", "nick": "ManoVelhoPS", "classe": "PS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P014", "nick": "MechK7", "classe": "MS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P015", "nick": "NaafirY", "classe": "ATA", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Atalanta de Ítalo. Nicks da Atalanta: 1RoX/iRoX → MEGAZ0RD (quando era de Danilo) → NaafirY (agora de Ítalo, confirmado em 10/11/2026). BC: o ID P015 segue o DONO Ítalo e soma as pontuações da sacerdotisa NaaFirY (27/09, 04/10 e 11/10) e da Atalanta NaafirY (08/11). As pontuações da época 1RoX/iRoX/MEGAZ0RD são de Danilo e estão em P029 (megaRoX); corrigido em 11/11/2026. Pagamento de novembro transferido de NaaFirY P016 em 30/10/2026: 20kk Gold, 600 Coins e 6 de cada Shelton."}, {"id": "P016", "nick": "NaaFirY", "classe": "SACER", "cla": "", "situacao": "Inativo", "obs": "SAIU DA TAG EM 30/10/2026; sem clã, sacerdotisa de Ítalo. Pagamento de novembro/2026 transferido para a Atalanta P015 (hoje NaafirY); não cobrar novamente. Histórico de BC migrado para P015 (mesmo dono) em 11/11/2026."}, {"id": "P017", "nick": "Nairobi", "classe": "ATA", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P018", "nick": "RINZLER", "classe": "ATA", "cla": "", "situacao": "Inativo", "obs": "Personagem vendido. Saiu da tag PHOENIX em 07/11/2026. Novembro/2026 encerrado com o que já tinha pago (20kk Gold e 600 Coins); Sheltons dispensados. Histórico BC preservado."}, {"id": "P019", "nick": "Sm0ke", "classe": "AS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P020", "nick": "Surto", "classe": "MG", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P021", "nick": "TenenteFS", "classe": "FS", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Mesmo dono (Luiz) jogou de TenenteATA (27/09) e TenenteSC (04/10). Histórico BC consolidado sob P021; confirmado em 02/11/2026."}, {"id": "P022", "nick": "Traubon", "classe": "FS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P023", "nick": "Winniie", "classe": "PS", "cla": "PHOENIX", "situacao": "Ativo", "obs": ""}, {"id": "P024", "nick": "xMataRind0x", "classe": "ATA", "cla": "", "situacao": "Inativo", "obs": "Parou de jogar. Saiu da tag PHOENIX em 02/11/2026 e cedeu a vaga para LostLance (H026). Sem cobrança de novembro/2026; histórico BC preservado."}, {"id": "H001", "nick": "LastPriest", "classe": "SACER", "cla": "HYDRA", "situacao": "Ativo", "obs": "Sacerdotisa de Jonathas (LastKnight). Líder da HYDRA. Isenta de contribuição mensal (definido em 05/11/2026)."}, {"id": "H002", "nick": "CLEO", "classe": "SACER", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H003", "nick": "Cleuza", "classe": "SACER", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H004", "nick": "AGON14DO", "classe": "PS", "cla": "", "situacao": "Inativo", "obs": "Saiu da tag HYDRA em 10/11/2026 (motivo não informado). Não contribuiu em novembro/2026; obrigação retirada. Histórico BC preservado."}, {"id": "H005", "nick": "Ciborgue", "classe": "MS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H006", "nick": "DaCoro", "classe": "ATA", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H007", "nick": "DSTN00", "classe": "FS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H008", "nick": "Estelionamago", "classe": "MG", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H009", "nick": "FalsoDelta", "classe": "FS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H010", "nick": "FlexaDourada", "classe": "AS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H011", "nick": "FsNarguila", "classe": "FS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H012", "nick": "kn0xyy", "classe": "AS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H013", "nick": "MGera", "classe": "MG", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H014", "nick": "Oken", "classe": "AS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H015", "nick": "OPALA71", "classe": "PS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H016", "nick": "PepeLePew", "classe": "MS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H017", "nick": "PinguimDoido", "classe": "MG", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H018", "nick": "Plateao", "classe": "PS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H019", "nick": "Rattus", "classe": "KS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H020", "nick": "Rayyquaza", "classe": "PS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H021", "nick": "ShowGirl", "classe": "ATA", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H022", "nick": "SkulKnight", "classe": "KS", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H023", "nick": "tMettalica", "classe": "", "cla": "HYDRA", "situacao": "Inativo", "obs": ""}, {"id": "H024", "nick": "TOSCAO", "classe": "MG", "cla": "HYDRA", "situacao": "Ativo", "obs": ""}, {"id": "H025", "nick": "Vivi", "classe": "SACER", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Sacerdotisa transferida da HYDRA para PHOENIX em 30/10/2026. Cadastro novo; ID provisório H025."}, {"id": "P025", "nick": "100Nome", "classe": "ATA", "cla": "", "situacao": "Inativo", "obs": "Ex-membro PHOENIX (Alaercio). Identidade confirmada em 02/11/2026; histórico BC preservado."}, {"id": "P026", "nick": "Casida", "classe": "ATA", "cla": "", "situacao": "Inativo", "obs": "Ex-membro PHOENIX (Victor). Identidade confirmada em 02/11/2026; histórico BC preservado."}, {"id": "P027", "nick": "Hdmi", "classe": "FS", "cla": "", "situacao": "Inativo", "obs": "Ex-membro PHOENIX (Renato). Identidade confirmada em 02/11/2026; histórico BC preservado."}, {"id": "P028", "nick": "Evasion", "classe": "AS", "cla": "", "situacao": "Inativo", "obs": "Ex-membro PHOENIX (Alencar). Identidade confirmada em 02/11/2026; histórico BC preservado."}, {"id": "H026", "nick": "Akimov", "classe": "ATA", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Atalanta; nick anterior LostLance (trocou para Akimov em 08/11/2026). Transferida da HYDRA para PHOENIX; ocupa a vaga de xMataRind0x (P024). Pontuou pela PHOENIX no BC de 01/11/2026 como LostLance. Contribui novembro/2026 como PHOENIX. ID H026 (origem HYDRA)."}, {"id": "P029", "nick": "megaRoX", "classe": "AS", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Arqueira nível 106 de Danilo, antigo dono da Atalanta 1RoX/iRoX/MEGAZ0RD (hoje NaafirY P015, de Ítalo). Entrou na PHOENIX em 03/11/2026; contribui novembro/2026 como PHOENIX. BC: o ID P029 segue o DONO Danilo e soma as pontuações da época 1RoX (27/09 e 04/10), iRoX (11/10) e MEGAZ0RD (01/11); migrado em 11/11/2026."}, {"id": "H027", "nick": "EbonyPhoenix", "classe": "AS", "cla": "", "situacao": "Inativo", "obs": "Arqueira da HYDRA, não cadastrada até 05/11/2026. Personagem vendido; o dono comprou o Lutador GON (H028), que assume a obrigação de novembro/2026."}, {"id": "H028", "nick": "GON", "classe": "FS", "cla": "HYDRA", "situacao": "Ativo", "obs": "Lutador comprado pelo dono da EbonyPhoenix (H027), que foi vendida. Entrou na HYDRA em 05/11/2026; contribui novembro/2026 como HYDRA (isento de Coins)."}, {"id": "H029", "nick": "BombadoPK", "classe": "PS", "cla": "HYDRA", "situacao": "Ativo", "obs": "Cadastrado em 07/11/2026. Já jogava na HYDRA sem cadastro; foi na DG da HYDRA de 06/11/2026 (informado como \"Bombado\"). Classe deduzida pelo nick (PK = Pike); confirmar."}, {"id": "H030", "nick": "PaTraoKS", "classe": "KS", "cla": "HYDRA", "situacao": "Ativo", "obs": "Cadastrado em 07/11/2026. Já jogava na HYDRA sem cadastro; pontuou no BC de 11/10/2026 (Cavaleiro) e foi na DG da HYDRA de 06/11/2026 (informado como \"Patrão\")."}, {"id": "P030", "nick": "FSlala", "classe": "FS", "cla": "PHOENIX", "situacao": "Ativo", "obs": "Cadastrado em 08/11/2026. Lutador que já jogava pela PHOENIX sem cadastro: pontuou nos BCs de 01/11/2026 (41.448) e 08/11/2026 (22.761). Contribui novembro/2026 como PHOENIX."}], "obrigacoes": [{"id": "P001", "nick": "COMANF", "cla": "PHOENIX", "status": "ISENTO", "gold_dev": 0.0, "sh_dev": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "KS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P002", "nick": "AuraVortex", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "AS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P005", "nick": "DanielRoX", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "PS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P006", "nick": "DarkKnighttt", "cla": "PHOENIX", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 7.0, 3.0, 4.0, 3.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 3.0, 2.0, 3.0], "falta_coins": 0, "classe": "KS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P007", "nick": "Divoom", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "KS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P008", "nick": "EVILDANTE", "cla": "PHOENIX", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "PS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P009", "nick": "GodPvp", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 1000.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "", "situacao": "Inativo"}, {"id": "P010", "nick": "Hira", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P011", "nick": "KRONOS", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 1000.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "FS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P012", "nick": "LastKnight", "cla": "PHOENIX", "status": "ISENTO", "gold_dev": 0.0, "sh_dev": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "KS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P013", "nick": "ManoVelhoPS", "cla": "PHOENIX", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 600.0, "classe": "PS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P014", "nick": "MechK7", "cla": "PHOENIX", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 600.0, "classe": "MS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P015", "nick": "NaafirY", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P017", "nick": "Nairobi", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P018", "nick": "RINZLER", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "", "situacao": "Inativo"}, {"id": "P019", "nick": "Sm0ke", "cla": "PHOENIX", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 4.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 2.0], "falta_coins": 0, "classe": "AS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P020", "nick": "Surto", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 25.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 1000.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "MG", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P021", "nick": "TenenteFS", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "FS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P022", "nick": "Traubon", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "FS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P023", "nick": "Winniie", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "PS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "H026", "nick": "Akimov", "cla": "PHOENIX", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "ATA", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "H001", "nick": "LastPriest", "cla": "HYDRA", "status": "ISENTO", "gold_dev": 0.0, "sh_dev": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "SACER", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H002", "nick": "CLEO", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "SACER", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H003", "nick": "Cleuza", "cla": "HYDRA", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "SACER", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H005", "nick": "Ciborgue", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "MS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H006", "nick": "DaCoro", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "ATA", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H007", "nick": "DSTN00", "cla": "HYDRA", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 10.0, "sh_rec": [6.0, 6.0, 3.0, 6.0, 6.0], "coins_rec": 0.0, "falta_gold": 10.0, "falta_sh": [0, 0, 3.0, 0, 0], "falta_coins": 0, "classe": "FS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H008", "nick": "Estelionamago", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "MG", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H009", "nick": "FalsoDelta", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "FS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H010", "nick": "FlexaDourada", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "AS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H011", "nick": "FsNarguila", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "FS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H012", "nick": "kn0xyy", "cla": "HYDRA", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "AS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H013", "nick": "MGera", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "MG", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H014", "nick": "Oken", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "AS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H015", "nick": "OPALA71", "cla": "HYDRA", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "PS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H016", "nick": "PepeLePew", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "MS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H017", "nick": "PinguimDoido", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "MG", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H018", "nick": "Plateao", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "PS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H019", "nick": "Rattus", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "KS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H020", "nick": "Rayyquaza", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "PS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H021", "nick": "ShowGirl", "cla": "HYDRA", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "ATA", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H022", "nick": "SkulKnight", "cla": "HYDRA", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "KS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H024", "nick": "TOSCAO", "cla": "HYDRA", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [3.0, 3.0, 3.0, 3.0, 3.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [3.0, 3.0, 3.0, 3.0, 3.0], "falta_coins": 0, "classe": "MG", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H025", "nick": "Vivi", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "SACER", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "P029", "nick": "megaRoX", "cla": "PHOENIX", "status": "QUITADO", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 20.0, "sh_rec": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_rec": 600.0, "falta_gold": 0, "falta_sh": [0, 0, 0, 0, 0], "falta_coins": 0, "classe": "AS", "cla_atual": "PHOENIX", "situacao": "Ativo"}, {"id": "H028", "nick": "GON", "cla": "HYDRA", "status": "PARCIAL", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 20.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 6.0], "coins_rec": 0.0, "falta_gold": 0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 0], "falta_coins": 0, "classe": "FS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H029", "nick": "BombadoPK", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "PS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "H030", "nick": "PaTraoKS", "cla": "HYDRA", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 0.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 0, "classe": "KS", "cla_atual": "HYDRA", "situacao": "Ativo"}, {"id": "P030", "nick": "FSlala", "cla": "PHOENIX", "status": "PENDENTE", "gold_dev": 20.0, "sh_dev": [6.0, 6.0, 6.0, 6.0, 6.0], "coins_dev": 600.0, "gold_rec": 0.0, "sh_rec": [0.0, 0.0, 0.0, 0.0, 0.0], "coins_rec": 0.0, "falta_gold": 20.0, "falta_sh": [6.0, 6.0, 6.0, 6.0, 6.0], "falta_coins": 600.0, "classe": "FS", "cla_atual": "PHOENIX", "situacao": "Ativo"}], "recebimentos": [{"data": "2026-10-29", "comp": "2026-11", "id": "P011", "nick": "KRONOS", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 1000.0, "obs": "Pagamento antecipado da competência novembro/2026; 600 Coins obrigatórios + 400 Coins adicionais. Próxima competência: dezembro/2026."}, {"data": "2026-10-29", "comp": "2026-11", "id": "P015", "nick": "MEGAZ0RD (entregue originalmente por NaaFirY)", "gold": 10.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "TRANSFERÊNCIA DE CRÉDITO 30/10/2026: pagamento originalmente feito por NaaFirY (P016), proprietário Ítalo, aplicado à Atalanta MEGAZ0RD (P015), novembro/2026. Recebido 29/10: 10kk Gold, 6 de cada Shelton e 600 Coins. Não duplicar arrecadação."}, {"data": "2026-10-29", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 0.0, "sh": [6.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Entrega parcial de novembro/2026: 6 Raidents. Outros recursos permanecem pendentes."}, {"data": "2026-10-30", "comp": "2026-11", "id": "H003", "nick": "Cleuza", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 0.0, "obs": "Mensalidade de novembro/2026 quitada integralmente. HYDRA: 20kk Gold + 6 de cada Shelton; sem cobrança de Coins."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P006", "nick": "DarkKnighttt", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Novembro/2026: 20kk Gold e 600 Coins recebidos; 6 de cada Shelton ainda não informados/pendentes."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P017", "nick": "Nairobi", "gold": 20.0, "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "coins": 600.0, "obs": "Novembro/2026: 20kk Gold e 600 Coins quitados; 3 de cada Shelton entregues, faltam mais 3 de cada tipo (15 no total)."}, {"data": "2026-10-30", "comp": "2026-11", "id": "H015", "nick": "OPALA71", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Novembro/2026: 20kk Gold quitados. HYDRA isento de Coins; 6 Sheltons de cada tipo pendentes de entrega posterior."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P015", "nick": "MEGAZ0RD (entregue originalmente por NaaFirY)", "gold": 10.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "TRANSFERÊNCIA DE CRÉDITO 30/10/2026: complemento de 10kk Gold originalmente pago por NaaFirY (P016), proprietário Ítalo, aplicado à Atalanta MEGAZ0RD (P015), novembro/2026. Total quitado; sem cobrança adicional."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P020", "nick": "Surto", "gold": 25.0, "sh": [6.0, 5.0, 6.0, 0.0, 3.0], "coins": 1000.0, "obs": "Entrega novembro/2026; excedente de 5kk Gold e 400 Coins; pendentes 1 Transparo, 6 Devines e 3 Celestos."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P009", "nick": "GodPvp", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 1000.0, "obs": "Recebidos 1000 Coins para novembro; 600 da obrigação e 400 adicionais."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P002", "nick": "AuraVortex", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 0.0], "coins": 600.0, "obs": "Novembro/2026: Gold 20kk, Coins 600 e 6 Raidents, Transparos, Murkis e Devines recebidos; faltam 6 Celestos."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P010", "nick": "Hira", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade novembro/2026 integralmente quitada: 20kk Gold, 6 de cada Shelton e 600 Coins."}, {"data": "2026-10-30", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Pagamento complementar de 600 Coins para novembro/2026. Já havia entregado 6 Raidents; permanecem pendentes 20kk Gold e 24 Sheltons."}, {"data": "2026-10-31", "comp": "2026-11", "id": "H021", "nick": "ShowGirl", "gold": 0.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 0.0, "obs": "Novembro/2026 HYDRA: 6 de cada Shelton recebidos; faltam 20kk Gold. Isenta de Coins."}, {"data": "2026-11-01", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 6.0, 3.0], "coins": 0.0, "obs": "Pagamento complementar novembro/2026: 6 Devines e 3 Celestos. Permanecem 20kk Gold, 6 Transparos, 6 Murkis e 3 Celestos."}, {"data": "2026-11-01", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Pagamento complementar da mensalidade novembro/2026: 20kk Gold recebidos. Restam 6 Transparos, 6 Murkis e 3 Celestos."}, {"data": "2026-11-01", "comp": "2026-11", "id": "P002", "nick": "AuraVortex", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 0.0, 6.0], "coins": 0.0, "obs": "Entrega complementar de 6 Celestos em novembro/2026. Mensalidade integralmente QUITADA: 20kk Gold, 6 de cada Shelton e 600 Coins. Não gerar entrada de Coins ou Gold adicional."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 0.0, "sh": [0.0, 6.0, 0.0, 0.0, 2.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 6 Transparos e 2 Celestos."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P017", "nick": "Nairobi", "gold": 0.0, "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 3 Raidents, 3 Transparos, 3 Murkis, 3 Devines e 3 Celestos."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P020", "nick": "Surto", "gold": 0.0, "sh": [0.0, 1.0, 0.0, 6.0, 3.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 1 Transparo, 6 Devines e 3 Celestos."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P009", "nick": "GodPvp", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 20kk Gold."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P023", "nick": "Winniie", "gold": 10.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 10kk Gold e 6 de cada Shelton. Doou também 1 Inferna Mágica para uso no SOD (item, fora da mensalidade)."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P023", "nick": "Winniie", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 600 Coins."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P023", "nick": "Winniie", "gold": 5.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 5kk Gold."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P022", "nick": "Traubon", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold, 6 de cada Shelton e 600 Coins (pagamento integral)."}, {"data": "2026-11-02", "comp": "2026-11", "id": "P012", "nick": "LastKnight", "gold": 0.0, "sh": [0.0, 0.0, 6.0, 0.0, 1.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 6 Murkis e 1 Celesto."}, {"data": "2026-11-03", "comp": "2026-11", "id": "H012", "nick": "kn0xyy", "gold": 20.0, "sh": [5.0, 0.0, 1.0, 4.0, 4.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 20kk Gold, 5 Raidents, 1 Murki, 4 Devines e 4 Celestos."}, {"data": "2026-11-03", "comp": "2026-11", "id": "H022", "nick": "SkulKnight", "gold": 20.0, "sh": [6.0, 6.0, 5.0, 6.0, 6.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 20kk Gold, 6 Raidents, 6 Transparos, 5 Murkis, 6 Devines e 6 Celestos."}, {"data": "2026-11-03", "comp": "2026-11", "id": "H007", "nick": "DSTN00", "gold": 10.0, "sh": [6.0, 6.0, 3.0, 6.0, 6.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 10kk Gold, 6 Raidents, 6 Transparos, 3 Murkis, 6 Devines e 6 Celestos."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P007", "nick": "Divoom", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold, 6 de cada Shelton e 600 Coins (pagamento integral). Retirada de 3 de cada Shelton para a DG de 03/11/2026 registrada em SAÍDAS SHELTONS."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P006", "nick": "DarkKnighttt", "gold": 0.0, "sh": [4.0, 4.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 4 Raidents e 4 Transparos. Retirada de 3 Raidents e 3 Transparos registrada em SAÍDAS SHELTONS."}, {"data": "2026-11-03", "comp": "2026-11", "id": "H025", "nick": "Vivi", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold, 600 Coins e 6 de cada Shelton (3 de cada entregues + 3 de cada compensados pela cota da DG de 03/11/2026, ver SAÍDAS SHELTONS)."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P018", "nick": "RINZLER", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold e 600 Coins."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P005", "nick": "DanielRoX", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 0.0, "obs": "Mensalidade nov/2026: Gold pago com 1.000 Coins no lugar dos 20kk (1kc = 20kk; entrada registrada no CAIXA COINS) e 6 de cada Shelton (3 de cada entregues + 3 de cada compensados pela cota da DG de 03/11/2026, ver SAÍDAS SHELTONS). Os 600 Coins da mensalidade estão na linha 41."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P021", "nick": "TenenteFS", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold, 600 Coins e 6 de cada Shelton (3 de cada entregues + 3 de cada compensados pela cota da DG de 03/11/2026, ver SAÍDAS SHELTONS)."}, {"data": "2026-11-03", "comp": "2026-11", "id": "H026", "nick": "LostLance", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold e 600 Coins."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P019", "nick": "Sm0ke", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold e 600 Coins (300 depositados por Sm0ke + 300 pagos por LastKnight em nome de Sm0ke, acerto de dívida; ver CAIXA COINS linhas 23 e 26)."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P029", "nick": "megaRoX", "gold": 20.0, "sh": [6.0, 6.0, 6.0, 6.0, 6.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold, 600 Coins e 6 de cada Shelton (3 de cada entregues + 3 de cada compensados pela cota da DG de 03/11/2026, ver SAÍDAS SHELTONS)."}, {"data": "2026-11-04", "comp": "2026-11", "id": "H021", "nick": "ShowGirl", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 20kk Gold."}, {"data": "2026-11-03", "comp": "2026-11", "id": "P005", "nick": "DanielRoX", "gold": 0.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 600 Coins. Total entregue em Coins: 1.600 (1.000 no lugar dos 20kk Gold + 600 da mensalidade)."}, {"data": "2026-11-05", "comp": "2026-11", "id": "P023", "nick": "Winniie", "gold": 5.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 5kk Gold (completa os 20kk)."}, {"data": "2026-11-05", "comp": "2026-11", "id": "H028", "nick": "GON", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 6.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 20kk Gold e 6 Celestos."}, {"data": "2026-11-06", "comp": "2026-11", "id": "H024", "nick": "TOSCAO", "gold": 0.0, "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 3 de cada Shelton compensados pela cota da DG da HYDRA de 06/11/2026 (usou os próprios Sheltons na DG; ver SAÍDAS SHELTONS). Os 4,2kk Gold que ele deu para a DG estão no CAIXA GOLD como contribuição à parte."}, {"data": "2026-11-08", "comp": "2026-11", "id": "P008", "nick": "EVILDANTE", "gold": 20.0, "sh": [0.0, 0.0, 0.0, 0.0, 0.0], "coins": 600.0, "obs": "Mensalidade nov/2026: 20kk Gold e 600 Coins."}, {"data": "2026-11-08", "comp": "2026-11", "id": "H012", "nick": "kn0xyy", "gold": 0.0, "sh": [1.0, 6.0, 5.0, 2.0, 2.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 1 Raident, 6 Transparos, 5 Murkis, 2 Devines e 2 Celestos (completa os Sheltons)."}, {"data": "2026-11-09", "comp": "2026-11", "id": "P019", "nick": "Sm0ke", "gold": 0.0, "sh": [6.0, 6.0, 6.0, 6.0, 4.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 6 Raidents, 6 Transparos, 6 Murkis, 6 Devines e 4 Celestos."}, {"data": "2026-11-09", "comp": "2026-11", "id": "H022", "nick": "SkulKnight", "gold": 0.0, "sh": [0.0, 0.0, 1.0, 0.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 1 Murki (completa os Sheltons; faltava 1 Murki)."}, {"data": "2026-11-10", "comp": "2026-11", "id": "P006", "nick": "DarkKnighttt", "gold": 0.0, "sh": [2.0, 0.0, 0.0, 1.0, 0.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 2 Raidents e 1 Devine, tirados da doação voluntária de 12 Raidents + 1 Devine (10/11). Os outros 10 Raidents estão na linha 50, como doação."}, {"data": "2026-11-10", "comp": "DOAÇÃO", "id": "P006", "nick": "DarkKnighttt", "gold": 0.0, "sh": [10.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Doação voluntária (livre e espontânea vontade) de 10 Raidents ao baú da tag. NÃO é mensalidade e NÃO abate obrigações (competência DOAÇÃO fica fora das fórmulas). Faz parte da entrega de 12 Raidents + 1 Devine de 10/11; 2 Raidents e 1 Devine abateram novembro (linha 49)."}, {"data": "2026-11-10", "comp": "DOAÇÃO", "id": "P001", "nick": "COMANF", "gold": 0.0, "sh": [20.0, 0.0, 0.0, 0.0, 0.0], "coins": 0.0, "obs": "Doação voluntária de 20 Raidents ao baú da tag pelo líder COMANF (isento de mensalidade). NÃO é mensalidade e NÃO abate obrigações (competência DOAÇÃO fica fora das fórmulas)."}, {"data": "2026-11-10", "comp": "2026-11", "id": "P006", "nick": "DarkKnighttt", "gold": 0.0, "sh": [0.0, 3.0, 3.0, 3.0, 3.0], "coins": 0.0, "obs": "Mensalidade nov/2026: 3 Transparos, 3 Murkis, 3 Devines e 3 Celestos. Faltavam 2 Transparos, então 1 Transparo ficou de excedente (não abate outro mês)."}], "caixa_gold": [{"data": "2026-10-29", "tipo": "Entrada", "desc": "KRONOS — mensalidade novembro/2026", "valor": 20.0, "resp": "P011 / KRONOS", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 20.0}, {"data": "2026-10-29", "tipo": "Entrada", "desc": "MEGAZ0RD — mensalidade novembro/2026 (origem NaaFirY), parte 1", "valor": 10.0, "resp": "P015 / MEGAZ0RD", "cat": "Mensalidade", "obs": "Pago originalmente por NaaFirY (P016), proprietário Ítalo; crédito transferido para MEGAZ0RD em 30/10/2026.", "saldo": 30.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Cleuza — mensalidade novembro/2026", "valor": 20.0, "resp": "H003 / Cleuza", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 50.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "DarkKnighttt — mensalidade novembro/2026", "valor": 20.0, "resp": "P006 / DarkKnighttt", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 70.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Nairobi — mensalidade novembro/2026", "valor": 20.0, "resp": "P017 / Nairobi", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 90.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "OPALA71 — mensalidade novembro/2026", "valor": 20.0, "resp": "H015 / OPALA71", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 110.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "MEGAZ0RD — mensalidade novembro/2026 (origem NaaFirY), parte 2", "valor": 10.0, "resp": "P015 / MEGAZ0RD", "cat": "Mensalidade", "obs": "Complemento pago originalmente por NaaFirY (P016); crédito transferido para MEGAZ0RD em 30/10/2026.", "saldo": 120.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Surto — mensalidade novembro/2026", "valor": 25.0, "resp": "P020 / Surto", "cat": "Mensalidade", "obs": "20kk da mensalidade + 5kk excedente; excedente não abate outro mês.", "saldo": 145.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "AuraVortex — mensalidade novembro/2026", "valor": 20.0, "resp": "P002 / AuraVortex", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 165.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Hira — mensalidade novembro/2026", "valor": 20.0, "resp": "P010 / Hira", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 185.0}, {"data": "2026-11-01", "tipo": "Entrada", "desc": "PREMIAÇÃO BLESS CASTLE — 2º LUGAR", "valor": 90.0, "resp": "P001 / COMANF", "cat": "Premiação BC", "obs": "90kk Gold recebidos e repassados pelo líder COMANF, referentes à premiação da PHOENIX pelo 2º lugar no Bless Castle. Entrada extraordinária no caixa coletivo; NÃO é mensalidade de COMANF e NÃO abate obrigações individuais.", "saldo": 275.0}, {"data": "2026-11-01", "tipo": "Entrada", "desc": "LastKnight — mensalidade novembro/2026", "valor": 20.0, "resp": "P012 / LastKnight", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 295.0}, {"data": "2026-11-01", "tipo": "Entrada", "desc": "VENDA DE 16 JERAS AO FERREIRO", "valor": 0.16, "resp": "P012 / LastKnight", "cat": "Venda de itens ao NPC", "obs": "16 Jeras vendidas ao ferreiro por 160.000 Gold no total (10.000 Gold por Jera). Receita extraordinária da tag; não é mensalidade nem premiação BC.", "saldo": 295.16}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "GodPvp — mensalidade novembro/2026", "valor": 20.0, "resp": "P009 / GodPvp", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 315.16}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "Winniie — mensalidade novembro/2026", "valor": 10.0, "resp": "P023 / Winniie", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11. Parte 1: 10kk de 20kk.", "saldo": 325.16}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "Winniie — mensalidade novembro/2026", "valor": 5.0, "resp": "P023 / Winniie", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11. Parte 2: 5kk (total entregue 15kk de 20kk).", "saldo": 330.16}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "Traubon — mensalidade novembro/2026", "valor": 20.0, "resp": "P022 / Traubon", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 350.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "kn0xyy — mensalidade novembro/2026", "valor": 20.0, "resp": "H012 / kn0xyy", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 370.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "SkulKnight — mensalidade novembro/2026", "valor": 20.0, "resp": "H022 / SkulKnight", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 390.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "DSTN00 — mensalidade novembro/2026", "valor": 10.0, "resp": "H007 / DSTN00", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11. Parte 1: 10kk de 20kk.", "saldo": 400.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Divoom — mensalidade novembro/2026", "valor": 20.0, "resp": "P007 / Divoom", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 420.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Vivi — mensalidade novembro/2026", "valor": 20.0, "resp": "H025 / Vivi", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 440.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "RINZLER — mensalidade novembro/2026", "valor": 20.0, "resp": "P018 / RINZLER", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 460.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "TenenteFS — mensalidade novembro/2026", "valor": 20.0, "resp": "P021 / TenenteFS", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 480.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "LostLance — mensalidade novembro/2026", "valor": 20.0, "resp": "H026 / LostLance", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 500.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Sm0ke — mensalidade novembro/2026", "valor": 20.0, "resp": "P019 / Sm0ke", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 520.16}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "megaRoX — mensalidade novembro/2026", "valor": 20.0, "resp": "P029 / megaRoX", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 540.16}, {"data": "2026-11-03", "tipo": "Saída", "desc": "RETIRADA PARA A DG DA PHOENIX", "valor": 100.0, "resp": "P012 / LastKnight", "cat": "Despesa DG", "obs": "100kk Gold retirados pelo líder LastKnight para a realização da DG do clã PHOENIX de 03/11/2026. Despesa coletiva da tag; não é pagamento nem abate mensalidade.", "saldo": 440.16}, {"data": "2026-11-04", "tipo": "Entrada", "desc": "ShowGirl — mensalidade novembro/2026", "valor": 20.0, "resp": "H021 / ShowGirl", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 460.16}, {"data": "2026-11-05", "tipo": "Entrada", "desc": "Winniie — mensalidade novembro/2026", "valor": 5.0, "resp": "P023 / Winniie", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11. Parte 3: 5kk (total entregue 20kk de 20kk).", "saldo": 465.16}, {"data": "2026-11-05", "tipo": "Entrada", "desc": "GON — mensalidade novembro/2026", "valor": 20.0, "resp": "H028 / GON", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 485.16}, {"data": "2026-11-06", "tipo": "Saída", "desc": "RETIRADA PARA A DG DA HYDRA", "valor": 100.0, "resp": "Liderança", "cat": "Despesa DG", "obs": "100kk Gold retirados do caixa para a realização da DG do clã HYDRA. Despesa coletiva da tag; não é pagamento nem abate mensalidade.", "saldo": 385.16}, {"data": "2026-11-07", "tipo": "Saída", "desc": "RETIRADA DE GOLD — Liderança", "valor": 39.36, "resp": "Liderança", "cat": "Retirada", "obs": "39.360.000 Gold (39,36kk) retirados do caixa pela liderança em 07/11/2026. Finalidade não informada.", "saldo": 345.8}, {"data": "2026-11-06", "tipo": "Entrada", "desc": "TOSCAO — ajuda no custo da DG da HYDRA", "valor": 4.2, "resp": "H024 / TOSCAO", "cat": "Contribuição DG", "obs": "4,2kk Gold depositados por TOSCAO para ajudar a pagar a DG da HYDRA de 06/11/2026 (saída de 100kk na linha 33). Além disso, usou os próprios 3 de cada Shelton na DG (compensados na mensalidade; RECEBIMENTOS linha 44). Os 4,2kk são contribuição voluntária e não abatem o Gold da mensalidade de novembro/2026.", "saldo": 350.0}, {"data": "2026-11-08", "tipo": "Entrada", "desc": "EVILDANTE — mensalidade novembro/2026", "valor": 20.0, "resp": "P008 / EVILDANTE", "cat": "Mensalidade", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 370.0}, {"data": "2026-11-10", "tipo": "Saída", "desc": "RETIRADA PARA A DG DA PHOENIX (complemento)", "valor": 21.0, "resp": "Liderança", "cat": "Despesa DG", "obs": "21kk Gold retirados do caixa pela liderança em 10/11/2026 para completar o custo da DG do clã PHOENIX. Despesa coletiva da tag; não é pagamento nem abate mensalidade.", "saldo": 349.0}], "caixa_coins": [{"data": "2026-10-29", "tipo": "Entrada", "desc": "KRONOS — mensalidade 600 + adicional 400", "valor": 1000.0, "resp": "P011 / KRONOS", "obs": "Recebido em 29/10/2026 para a competência novembro/2026. Próxima cobrança: dezembro/2026.", "saldo": 1000.0}, {"data": "2026-10-29", "tipo": "Entrada", "desc": "MEGAZ0RD — 600 Coins novembro/2026 (origem NaaFirY)", "valor": 600.0, "resp": "P015 / MEGAZ0RD", "obs": "Recebimento original de 29/10/2026 feito por NaaFirY (P016), Ítalo. Crédito de 600 Coins transferido para MEGAZ0RD (P015) em 30/10; sem nova entrada no caixa.", "saldo": 1600.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "KRONOS — doação voluntária à tag", "valor": 3000.0, "resp": "P011 / KRONOS", "obs": "Doação de 3kc (3.000 Coins) ao caixa da PHOENIX; não abater nem antecipar mensalidades.", "saldo": 4600.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "DarkKnighttt — mensalidade novembro/2026", "valor": 600.0, "resp": "P006 / DarkKnighttt", "obs": "600 Coins da mensalidade novembro/2026; Sheltons não informados.", "saldo": 5200.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Nairobi — mensalidade novembro/2026", "valor": 600.0, "resp": "P017 / Nairobi", "obs": "600 Coins de novembro/2026; faltam 3 Sheltons de cada tipo.", "saldo": 5800.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Surto — novembro/2026", "valor": 1000.0, "resp": "P020 / Surto", "obs": "1kc recebido; 600 Coins mensalidade + 400 excedentes.", "saldo": 6800.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "GodPvp — mensalidade novembro", "valor": 1000.0, "resp": "P009 / GodPvp", "obs": "600 Coins de novembro + 400 Coins adicionais", "saldo": 7800.0}, {"data": "2026-10-30", "tipo": "Saída", "desc": "DESPESA ADMINISTRATIVA — COMPRA DE BAÚ REMOTO (700 COINS)", "valor": 700.0, "resp": "Administração PHOENIX", "obs": "JUSTIFICATIVA: compra de 1 Baú Remoto para uso na gestão da PHOENIX, permitindo abrir baú remotamente e facilitar o recebimento, a organização e a movimentação de Gold e Sheltons entregues pelos membros. DESPESA OPERACIONAL DA TAG: 700 COINS DEBITADOS DO CAIXA EM 30/10/2026. Não é pagamento de jogador nem cobrança de mensalidade.", "saldo": 7100.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "AuraVortex — mensalidade novembro/2026", "valor": 600.0, "resp": "P002 / AuraVortex", "obs": "600 Coins recebidos; faltam apenas 6 Celestos.", "saldo": 7700.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "Hira — mensalidade novembro/2026", "valor": 600.0, "resp": "P010 / Hira", "obs": "600 Coins da mensalidade de novembro/2026; quitado integralmente.", "saldo": 8300.0}, {"data": "2026-10-30", "tipo": "Entrada", "desc": "LastKnight — 600 Coins mensalidade novembro/2026", "valor": 600.0, "resp": "P012 / LastKnight", "obs": "600 Coins recebidos. Gold 20kk e 24 Sheltons ainda pendentes; 6 Raidents entregues anteriormente.", "saldo": 8900.0}, {"data": "2026-11-01", "tipo": "Saída", "desc": "Retirada administrativa — 2kc", "valor": 2000.0, "resp": "Administração PHOENIX", "obs": "Retirada de 2.000 Coins solicitada em 01/11/2026. Finalidade não informada.", "saldo": 6900.0}, {"data": "2026-11-01", "tipo": "Entrada", "desc": "REPOSIÇÃO DE RETIRADA — LastKnight (2kc)", "valor": 2000.0, "resp": "P012 / LastKnight", "obs": "REPOSIÇÃO integral, pelo líder LastKnight, dos 2.000 Coins retirados em 01/11/2026 (linha 13). Devolução ao caixa da PHOENIX, sem caracterizar nova mensalidade ou doação adicional.", "saldo": 8900.0}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "Winniie — mensalidade novembro/2026", "valor": 600.0, "resp": "P023 / Winniie", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 9500.0}, {"data": "2026-11-02", "tipo": "Entrada", "desc": "Traubon — mensalidade novembro/2026", "valor": 600.0, "resp": "P022 / Traubon", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 10100.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Divoom — mensalidade novembro/2026", "valor": 600.0, "resp": "P007 / Divoom", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 10700.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Vivi — mensalidade novembro/2026", "valor": 600.0, "resp": "H025 / Vivi", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 11300.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "RINZLER — mensalidade novembro/2026", "valor": 600.0, "resp": "P018 / RINZLER", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 11900.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "DanielRoX — Gold da mensalidade novembro/2026 pago em Coins", "valor": 1000.0, "resp": "P005 / DanielRoX", "obs": "1.000 Coins recebidos no lugar dos 20kk Gold (1kc = 20kk). Em RECEBIMENTOS conta como os 20kk Gold da mensalidade. Os 600 Coins da mensalidade estão na linha 25 (total entregue: 1.600).", "saldo": 12900.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "TenenteFS — mensalidade novembro/2026", "valor": 600.0, "resp": "P021 / TenenteFS", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 13500.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "LostLance — mensalidade novembro/2026", "valor": 600.0, "resp": "H026 / LostLance", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 14100.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "Sm0ke — mensalidade novembro/2026 (parte 1)", "valor": 300.0, "resp": "P019 / Sm0ke", "obs": "300 Coins depositados por Sm0ke. Os outros 300 da mensalidade foram pagos por LastKnight em nome de Sm0ke (acerto de dívida entre os dois), na linha 26. Em RECEBIMENTOS a mensalidade de Sm0ke consta com os 600 Coins.", "saldo": 14400.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "megaRoX — mensalidade novembro/2026", "valor": 600.0, "resp": "P029 / megaRoX", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 15000.0}, {"data": "2026-11-03", "tipo": "Entrada", "desc": "DanielRoX — mensalidade novembro/2026", "valor": 600.0, "resp": "P005 / DanielRoX", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11. Junto com a linha 20, totaliza os 1.600 Coins entregues por DanielRoX.", "saldo": 15600.0}, {"data": "2026-11-07", "tipo": "Entrada", "desc": "Sm0ke — mensalidade novembro/2026 (parte 2, paga por LastKnight)", "valor": 300.0, "resp": "P012 / LastKnight", "obs": "300 Coins depositados por LastKnight em nome de Sm0ke em 07/11/2026, quitando uma dívida pessoal de LastKnight com Sm0ke. Completa os 600 Coins da mensalidade de Sm0ke (parte 1 na linha 23). Não é mensalidade nem doação de LastKnight.", "saldo": 15900.0}, {"data": "2026-11-08", "tipo": "Entrada", "desc": "EVILDANTE — mensalidade novembro/2026", "valor": 600.0, "resp": "P008 / EVILDANTE", "obs": "Espelho do lançamento em RECEBIMENTOS, competência 2026-11.", "saldo": 16500.0}], "saidas_sheltons": [{"data": "2026-11-03", "tipo": "Retirada", "id": "P012", "nick": "LastKnight", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG de 03/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-03", "tipo": "Retirada", "id": "P007", "nick": "Divoom", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG de 03/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-03", "tipo": "Retirada", "id": "P015", "nick": "MEGAZ0RD", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG de 03/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton (informada como megazord/Ítalo)."}, {"data": "2026-11-03", "tipo": "Retirada", "id": "P006", "nick": "DarkKnighttt", "sh": [3.0, 3.0, 0.0, 0.0, 0.0], "fim": "DG de 03/11/2026", "obs": "Retirada do baú para a DG: 3 Raidents e 3 Transparos."}, {"data": "2026-11-03", "tipo": "Compensação", "id": "H025", "nick": "Vivi", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "Cota da DG de 03/11/2026", "obs": "Cota da DG abatida na mensalidade: entregou 3 de cada em vez de 6. Em RECEBIMENTOS constam 6 de cada (3 entregues + 3 compensados)."}, {"data": "2026-11-03", "tipo": "Compensação", "id": "P005", "nick": "DanielRoX", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "Cota da DG de 03/11/2026", "obs": "Cota da DG abatida na mensalidade: entregou 3 de cada em vez de 6. Em RECEBIMENTOS constam 6 de cada (3 entregues + 3 compensados)."}, {"data": "2026-11-03", "tipo": "Compensação", "id": "P021", "nick": "TenenteFS", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "Cota da DG de 03/11/2026", "obs": "Cota da DG abatida na mensalidade: entregou 3 de cada em vez de 6. Em RECEBIMENTOS constam 6 de cada (3 entregues + 3 compensados)."}, {"data": "2026-11-03", "tipo": "Compensação", "id": "P029", "nick": "megaRoX", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "Cota da DG de 03/11/2026", "obs": "Cota da DG abatida na mensalidade: entregou 3 de cada em vez de 6. Em RECEBIMENTOS constam 6 de cada (3 entregues + 3 compensados)."}, {"data": "2026-11-06", "tipo": "Compensação", "id": "H024", "nick": "TOSCAO", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "Cota da DG da HYDRA de 06/11/2026", "obs": "Usou os próprios 3 de cada Shelton na DG, sem retirar do baú. Em RECEBIMENTOS constam 3 de cada como compensados."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H002", "nick": "CLEO", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H003", "nick": "Cleuza", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H029", "nick": "BombadoPK", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H030", "nick": "PaTraoKS", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H001", "nick": "LastPriest", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "H021", "nick": "ShowGirl", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-06", "tipo": "Retirada", "id": "", "nick": "Texugo", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da HYDRA de 06/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton. Player sem cadastro em MEMBROS (ID a confirmar)."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "P010", "nick": "Hira", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "P005", "nick": "DanielRoX", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "H025", "nick": "Vivi", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "P019", "nick": "Sm0ke", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "P015", "nick": "NaafirY", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton. NaafirY = Atalanta P015 (antigo nick MEGAZ0RD). Não é a NaaFirY P016 (sacerdotisa que saiu da tag)."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "P020", "nick": "Surto", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "H015", "nick": "OPALA71", "sh": [0.0, 0.0, 3.0, 0.0, 0.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada pontual do baú: 3 Murkis. Ainda não contribuiu com Sheltons em novembro/2026 (deve 6 de cada)."}, {"data": "2026-11-10", "tipo": "Retirada", "id": "H012", "nick": "kn0xyy", "sh": [3.0, 3.0, 3.0, 3.0, 3.0], "fim": "DG da PHOENIX de 10/11/2026", "obs": "Retirada do baú para a DG: 3 de cada Shelton."}], "bc": [{"data": "2026-09-27", "nick": "ManoVelhoPS", "classe": "Pike", "pontos": 69638.0, "pos": 1, "cla": "PHOENIX", "id": "P013", "chave": "P013"}, {"data": "2026-09-27", "nick": "Casida", "classe": "Atalanta", "pontos": 60915.0, "pos": 2, "cla": "PHOENIX", "id": "P026", "chave": "P026"}, {"data": "2026-09-27", "nick": "Surto", "classe": "Mago", "pontos": 59360.0, "pos": 3, "cla": "PHOENIX", "id": "P020", "chave": "P020"}, {"data": "2026-09-27", "nick": "NaaFirY", "classe": "Sacerdotisa", "pontos": 57598.0, "pos": 4, "cla": "PHOENIX", "id": "P015", "chave": "P015"}, {"data": "2026-09-27", "nick": "1RoX", "classe": "Atalanta", "pontos": 56890.0, "pos": 5, "cla": "PHOENIX", "id": "P029", "chave": "P029"}, {"data": "2026-09-27", "nick": "Divoom", "classe": "Cavaleiro", "pontos": 55947.0, "pos": 6, "cla": "PHOENIX", "id": "P007", "chave": "P007"}, {"data": "2026-09-27", "nick": "TenenteATA", "classe": "Atalanta", "pontos": 55568.0, "pos": 7, "cla": "PHOENIX", "id": "P021", "chave": "P021"}, {"data": "2026-09-27", "nick": "Nairobi", "classe": "Arqueira", "pontos": 54849.0, "pos": 8, "cla": "PHOENIX", "id": "P017", "chave": "P017"}, {"data": "2026-09-27", "nick": "LastKnight", "classe": "Cavaleiro", "pontos": 47984.0, "pos": 9, "cla": "PHOENIX", "id": "P012", "chave": "P012"}, {"data": "2026-09-27", "nick": "AuraVortex", "classe": "Arqueira", "pontos": 47076.0, "pos": 10, "cla": "PHOENIX", "id": "P002", "chave": "P002"}, {"data": "2026-09-27", "nick": "Evasion", "classe": "Arqueira", "pontos": 47036.0, "pos": 11, "cla": "PHOENIX", "id": "P028", "chave": "P028"}, {"data": "2026-09-27", "nick": "beStr0ng", "classe": "Pike", "pontos": 45181.0, "pos": 12, "cla": "PHOENIX", "id": "P003", "chave": "P003"}, {"data": "2026-09-27", "nick": "COMANF", "classe": "Cavaleiro", "pontos": 45103.0, "pos": 13, "cla": "PHOENIX", "id": "P001", "chave": "P001"}, {"data": "2026-09-27", "nick": "Traubon", "classe": "Lutador", "pontos": 41319.0, "pos": 14, "cla": "PHOENIX", "id": "P022", "chave": "P022"}, {"data": "2026-09-27", "nick": "100Nome", "classe": "Atalanta", "pontos": 40762.0, "pos": 15, "cla": "PHOENIX", "id": "P025", "chave": "P025"}, {"data": "2026-09-27", "nick": "KRONOS", "classe": "Lutador", "pontos": 39906.0, "pos": 16, "cla": "PHOENIX", "id": "P011", "chave": "P011"}, {"data": "2026-09-27", "nick": "ShowGirL", "classe": "Atalanta", "pontos": 37645.0, "pos": 17, "cla": "PHOENIX", "id": "H021", "chave": "H021"}, {"data": "2026-09-27", "nick": "xMataRind0x", "classe": "Atalanta", "pontos": 34462.0, "pos": 18, "cla": "PHOENIX", "id": "P024", "chave": "P024"}, {"data": "2026-09-27", "nick": "CLEO", "classe": "Sacerdotisa", "pontos": 34179.0, "pos": 19, "cla": "PHOENIX", "id": "H002", "chave": "H002"}, {"data": "2026-09-27", "nick": "DanielRoX", "classe": "Pike", "pontos": 34057.0, "pos": 20, "cla": "PHOENIX", "id": "P005", "chave": "P005"}, {"data": "2026-09-27", "nick": "Cordoba", "classe": "Cavaleiro", "pontos": 32895.0, "pos": 21, "cla": "PHOENIX", "id": "P004", "chave": "P004"}, {"data": "2026-09-27", "nick": "Winniie", "classe": "Pike", "pontos": 32024.0, "pos": 22, "cla": "PHOENIX", "id": "P023", "chave": "P023"}, {"data": "2026-09-27", "nick": "FlexaDourada", "classe": "Arqueira", "pontos": 28569.0, "pos": 23, "cla": "PHOENIX", "id": "H010", "chave": "H010"}, {"data": "2026-09-27", "nick": "Rayyquaza", "classe": "Pike", "pontos": 26029.0, "pos": 24, "cla": "PHOENIX", "id": "H020", "chave": "H020"}, {"data": "2026-10-04", "nick": "Casida", "classe": "Atalanta", "pontos": 63876.0, "pos": 1, "cla": "PHOENIX", "id": "P026", "chave": "P026"}, {"data": "2026-10-04", "nick": "Traubon", "classe": "Lutador", "pontos": 63569.0, "pos": 2, "cla": "PHOENIX", "id": "P022", "chave": "P022"}, {"data": "2026-10-04", "nick": "Bol4", "classe": "Atalanta", "pontos": 62724.0, "pos": 3, "cla": "PHOENIX", "id": "", "chave": "Bol4"}, {"data": "2026-10-04", "nick": "AuraVortex", "classe": "Arqueira", "pontos": 62518.0, "pos": 4, "cla": "PHOENIX", "id": "P002", "chave": "P002"}, {"data": "2026-10-04", "nick": "ManoVelhoPS", "classe": "Pike", "pontos": 60832.0, "pos": 5, "cla": "PHOENIX", "id": "P013", "chave": "P013"}, {"data": "2026-10-04", "nick": "MechK7", "classe": "Mecânico", "pontos": 55958.0, "pos": 6, "cla": "PHOENIX", "id": "P014", "chave": "P014"}, {"data": "2026-10-04", "nick": "1RoX", "classe": "Atalanta", "pontos": 55761.0, "pos": 7, "cla": "PHOENIX", "id": "P029", "chave": "P029"}, {"data": "2026-10-04", "nick": "OPai", "classe": "Cavaleiro", "pontos": 54854.0, "pos": 8, "cla": "PHOENIX", "id": "P012", "chave": "P012"}, {"data": "2026-10-04", "nick": "Nairobi", "classe": "Arqueira", "pontos": 53915.0, "pos": 9, "cla": "PHOENIX", "id": "P017", "chave": "P017"}, {"data": "2026-10-04", "nick": "beStr0ng", "classe": "Pike", "pontos": 52183.0, "pos": 10, "cla": "PHOENIX", "id": "P003", "chave": "P003"}, {"data": "2026-10-04", "nick": "Cordoba", "classe": "Cavaleiro", "pontos": 47362.0, "pos": 11, "cla": "PHOENIX", "id": "P004", "chave": "P004"}, {"data": "2026-10-04", "nick": "Divoom", "classe": "Cavaleiro", "pontos": 45402.0, "pos": 12, "cla": "PHOENIX", "id": "P007", "chave": "P007"}, {"data": "2026-10-04", "nick": "NaaFirY", "classe": "Sacerdotisa", "pontos": 45191.0, "pos": 13, "cla": "PHOENIX", "id": "P015", "chave": "P015"}, {"data": "2026-10-04", "nick": "Evasion", "classe": "Arqueira", "pontos": 44913.0, "pos": 14, "cla": "PHOENIX", "id": "P028", "chave": "P028"}, {"data": "2026-10-04", "nick": "xMataRind0x", "classe": "Atalanta", "pontos": 41348.0, "pos": 15, "cla": "PHOENIX", "id": "P024", "chave": "P024"}, {"data": "2026-10-04", "nick": "DanielRoX", "classe": "Pike", "pontos": 41248.0, "pos": 16, "cla": "PHOENIX", "id": "P005", "chave": "P005"}, {"data": "2026-10-04", "nick": "Winniie", "classe": "Pike", "pontos": 41050.0, "pos": 17, "cla": "PHOENIX", "id": "P023", "chave": "P023"}, {"data": "2026-10-04", "nick": "COMANF", "classe": "Cavaleiro", "pontos": 39296.0, "pos": 18, "cla": "PHOENIX", "id": "P001", "chave": "P001"}, {"data": "2026-10-04", "nick": "EVILDANTE", "classe": "Pike", "pontos": 33636.0, "pos": 19, "cla": "PHOENIX", "id": "P008", "chave": "P008"}, {"data": "2026-10-04", "nick": "100Nome", "classe": "Atalanta", "pontos": 32424.0, "pos": 20, "cla": "PHOENIX", "id": "P025", "chave": "P025"}, {"data": "2026-10-04", "nick": "Hdmi", "classe": "Lutador", "pontos": 31143.0, "pos": 21, "cla": "PHOENIX", "id": "P027", "chave": "P027"}, {"data": "2026-10-04", "nick": "KRONOS", "classe": "Lutador", "pontos": 25291.0, "pos": 22, "cla": "PHOENIX", "id": "P011", "chave": "P011"}, {"data": "2026-10-04", "nick": "TenenteSC", "classe": "Sacerdotisa", "pontos": 19153.0, "pos": 23, "cla": "PHOENIX", "id": "P021", "chave": "P021"}, {"data": "2026-10-04", "nick": "Surto", "classe": "Mago", "pontos": 17411.0, "pos": 24, "cla": "PHOENIX", "id": "P020", "chave": "P020"}, {"data": "2026-10-11", "nick": "NaaFirY", "classe": "Sacerdotisa", "pontos": 67674.0, "pos": 1, "cla": "PHOENIX", "id": "P015", "chave": "P015"}, {"data": "2026-10-11", "nick": "beStr0ng", "classe": "Pike", "pontos": 60961.0, "pos": 2, "cla": "PHOENIX", "id": "P003", "chave": "P003"}, {"data": "2026-10-11", "nick": "Surto", "classe": "Mago", "pontos": 54860.0, "pos": 3, "cla": "PHOENIX", "id": "P020", "chave": "P020"}, {"data": "2026-10-11", "nick": "Divoom", "classe": "Cavaleiro", "pontos": 51941.0, "pos": 4, "cla": "PHOENIX", "id": "P007", "chave": "P007"}, {"data": "2026-10-11", "nick": "Traubon", "classe": "Lutador", "pontos": 49939.0, "pos": 5, "cla": "PHOENIX", "id": "P022", "chave": "P022"}, {"data": "2026-10-11", "nick": "Cordoba", "classe": "Cavaleiro", "pontos": 48546.0, "pos": 6, "cla": "PHOENIX", "id": "P004", "chave": "P004"}, {"data": "2026-10-11", "nick": "ManoVelhoPS", "classe": "Pike", "pontos": 48250.0, "pos": 7, "cla": "PHOENIX", "id": "P013", "chave": "P013"}, {"data": "2026-10-11", "nick": "L4sT", "classe": "Cavaleiro", "pontos": 46342.0, "pos": 8, "cla": "PHOENIX", "id": "P012", "chave": "P012"}, {"data": "2026-10-11", "nick": "Nairobi", "classe": "Arqueira", "pontos": 46047.0, "pos": 9, "cla": "PHOENIX", "id": "P017", "chave": "P017"}, {"data": "2026-10-11", "nick": "Winniie", "classe": "Pike", "pontos": 45870.0, "pos": 10, "cla": "PHOENIX", "id": "P023", "chave": "P023"}, {"data": "2026-10-11", "nick": "iRoX", "classe": "Arqueira", "pontos": 44813.0, "pos": 11, "cla": "PHOENIX", "id": "P029", "chave": "P029"}, {"data": "2026-10-11", "nick": "COMANF", "classe": "Cavaleiro", "pontos": 43840.0, "pos": 12, "cla": "PHOENIX", "id": "P001", "chave": "P001"}, {"data": "2026-10-11", "nick": "KRONOS", "classe": "Lutador", "pontos": 42980.0, "pos": 13, "cla": "PHOENIX", "id": "P011", "chave": "P011"}, {"data": "2026-10-11", "nick": "AuraVortex", "classe": "Arqueira", "pontos": 42598.0, "pos": 14, "cla": "PHOENIX", "id": "P002", "chave": "P002"}, {"data": "2026-10-11", "nick": "ShowGirL", "classe": "Atalanta", "pontos": 39255.0, "pos": 15, "cla": "PHOENIX", "id": "H021", "chave": "H021"}, {"data": "2026-10-11", "nick": "MoonFS", "classe": "Lutador", "pontos": 37629.0, "pos": 16, "cla": "PHOENIX", "id": "", "chave": "MoonFS"}, {"data": "2026-10-11", "nick": "TOSCAO", "classe": "Mago", "pontos": 37382.0, "pos": 17, "cla": "PHOENIX", "id": "H024", "chave": "H024"}, {"data": "2026-10-11", "nick": "DanielRoX", "classe": "Pike", "pontos": 36866.0, "pos": 18, "cla": "PHOENIX", "id": "P005", "chave": "P005"}, {"data": "2026-10-11", "nick": "EVILDANTE", "classe": "Pike", "pontos": 32967.0, "pos": 19, "cla": "PHOENIX", "id": "P008", "chave": "P008"}, {"data": "2026-10-11", "nick": "VIGUS", "classe": "Mecânico", "pontos": 32384.0, "pos": 20, "cla": "PHOENIX", "id": "", "chave": "VIGUS"}, {"data": "2026-10-11", "nick": "xMataRind0x", "classe": "Atalanta", "pontos": 29177.0, "pos": 21, "cla": "PHOENIX", "id": "P024", "chave": "P024"}, {"data": "2026-10-11", "nick": "MechK7", "classe": "Mecânico", "pontos": 28682.0, "pos": 22, "cla": "PHOENIX", "id": "P014", "chave": "P014"}, {"data": "2026-10-11", "nick": "PaTraoKS", "classe": "Cavaleiro", "pontos": 21005.0, "pos": 23, "cla": "PHOENIX", "id": "H030", "chave": "H030"}, {"data": "2026-10-11", "nick": "FlexaDourada", "classe": "Arqueira", "pontos": 14848.0, "pos": 24, "cla": "PHOENIX", "id": "H010", "chave": "H010"}, {"data": "2026-11-01", "nick": "KRONOS", "classe": "Lutador", "pontos": 74272.0, "pos": 1, "cla": "PHOENIX", "id": "P011", "chave": "P011"}, {"data": "2026-11-01", "nick": "EVILDANTE", "classe": "Pike", "pontos": 72811.0, "pos": 2, "cla": "PHOENIX", "id": "P008", "chave": "P008"}, {"data": "2026-11-01", "nick": "Surto", "classe": "Mago", "pontos": 71729.0, "pos": 3, "cla": "PHOENIX", "id": "P020", "chave": "P020"}, {"data": "2026-11-01", "nick": "ManoVelhoPS", "classe": "Pike", "pontos": 69740.0, "pos": 4, "cla": "PHOENIX", "id": "P013", "chave": "P013"}, {"data": "2026-11-01", "nick": "LastKnight", "classe": "Cavaleiro", "pontos": 69707.0, "pos": 5, "cla": "PHOENIX", "id": "P012", "chave": "P012"}, {"data": "2026-11-01", "nick": "beStr0ng", "classe": "Pike", "pontos": 68631.0, "pos": 6, "cla": "PHOENIX", "id": "P003", "chave": "P003"}, {"data": "2026-11-01", "nick": "Traubon", "classe": "Lutador", "pontos": 68471.0, "pos": 7, "cla": "PHOENIX", "id": "P022", "chave": "P022"}, {"data": "2026-11-01", "nick": "MEGAZ0RD", "classe": "Atalanta", "pontos": 68459.0, "pos": 8, "cla": "PHOENIX", "id": "P029", "chave": "P029"}, {"data": "2026-11-01", "nick": "Nairobi", "classe": "Atalanta", "pontos": 67512.0, "pos": 9, "cla": "PHOENIX", "id": "P017", "chave": "P017"}, {"data": "2026-11-01", "nick": "Divoom", "classe": "Cavaleiro", "pontos": 62895.0, "pos": 10, "cla": "PHOENIX", "id": "P007", "chave": "P007"}, {"data": "2026-11-01", "nick": "RINZLER", "classe": "Atalanta", "pontos": 55984.0, "pos": 11, "cla": "PHOENIX", "id": "P018", "chave": "P018"}, {"data": "2026-11-01", "nick": "MechK7", "classe": "Mecânico", "pontos": 54069.0, "pos": 12, "cla": "PHOENIX", "id": "P014", "chave": "P014"}, {"data": "2026-11-01", "nick": "TenenteFS", "classe": "Lutador", "pontos": 53068.0, "pos": 13, "cla": "PHOENIX", "id": "P021", "chave": "P021"}, {"data": "2026-11-01", "nick": "COMANF", "classe": "Cavaleiro", "pontos": 52518.0, "pos": 14, "cla": "PHOENIX", "id": "P001", "chave": "P001"}, {"data": "2026-11-01", "nick": "Winniie", "classe": "Pike", "pontos": 51922.0, "pos": 15, "cla": "PHOENIX", "id": "P023", "chave": "P023"}, {"data": "2026-11-01", "nick": "LostLance", "classe": "Atalanta", "pontos": 49614.0, "pos": 16, "cla": "PHOENIX", "id": "H026", "chave": "H026"}, {"data": "2026-11-01", "nick": "DanielRoX", "classe": "Pike", "pontos": 48082.0, "pos": 17, "cla": "PHOENIX", "id": "P005", "chave": "P005"}, {"data": "2026-11-01", "nick": "Sm0ke", "classe": "Arqueira", "pontos": 47415.0, "pos": 18, "cla": "PHOENIX", "id": "P019", "chave": "P019"}, {"data": "2026-11-01", "nick": "Hira", "classe": "Atalanta", "pontos": 42583.0, "pos": 19, "cla": "PHOENIX", "id": "P010", "chave": "P010"}, {"data": "2026-11-01", "nick": "FSlala", "classe": "Lutador", "pontos": 41448.0, "pos": 20, "cla": "PHOENIX", "id": "P030", "chave": "P030"}, {"data": "2026-11-01", "nick": "GodPvp", "classe": "Atalanta", "pontos": 31687.0, "pos": 21, "cla": "PHOENIX", "id": "P009", "chave": "P009"}, {"data": "2026-11-01", "nick": "VIVI", "classe": "Sacerdotisa", "pontos": 31580.0, "pos": 22, "cla": "PHOENIX", "id": "H025", "chave": "H025"}, {"data": "2026-11-01", "nick": "AuraVortex", "classe": "Arqueira", "pontos": 23126.0, "pos": 23, "cla": "PHOENIX", "id": "P002", "chave": "P002"}, {"data": "2026-11-08", "nick": "KRONOS", "classe": "Lutador", "pontos": 38851.0, "pos": 1, "cla": "PHOENIX", "id": "P011", "chave": "P011"}, {"data": "2026-11-08", "nick": "AuraVortex", "classe": "Arqueira", "pontos": 36812.0, "pos": 2, "cla": "PHOENIX", "id": "P002", "chave": "P002"}, {"data": "2026-11-08", "nick": "Sm0ke", "classe": "Arqueira", "pontos": 30387.0, "pos": 3, "cla": "PHOENIX", "id": "P019", "chave": "P019"}, {"data": "2026-11-08", "nick": "NaafirY", "classe": "Atalanta", "pontos": 30033.0, "pos": 4, "cla": "PHOENIX", "id": "P015", "chave": "P015"}, {"data": "2026-11-08", "nick": "ManoVelhoPS", "classe": "Pike", "pontos": 29887.0, "pos": 5, "cla": "PHOENIX", "id": "P013", "chave": "P013"}, {"data": "2026-11-08", "nick": "EVILDANTE", "classe": "Pike", "pontos": 29837.0, "pos": 6, "cla": "PHOENIX", "id": "P008", "chave": "P008"}, {"data": "2026-11-08", "nick": "LastKnight", "classe": "Cavaleiro", "pontos": 27513.0, "pos": 7, "cla": "PHOENIX", "id": "P012", "chave": "P012"}, {"data": "2026-11-08", "nick": "Winniie", "classe": "Pike", "pontos": 27318.0, "pos": 8, "cla": "PHOENIX", "id": "P023", "chave": "P023"}, {"data": "2026-11-08", "nick": "TenenteFS", "classe": "Lutador", "pontos": 26137.0, "pos": 9, "cla": "PHOENIX", "id": "P021", "chave": "P021"}, {"data": "2026-11-08", "nick": "GodPvp", "classe": "Atalanta", "pontos": 24235.0, "pos": 10, "cla": "PHOENIX", "id": "P009", "chave": "P009"}, {"data": "2026-11-08", "nick": "Surto", "classe": "Mago", "pontos": 23652.0, "pos": 11, "cla": "PHOENIX", "id": "P020", "chave": "P020"}, {"data": "2026-11-08", "nick": "FSlala", "classe": "Lutador", "pontos": 22761.0, "pos": 12, "cla": "PHOENIX", "id": "P030", "chave": "P030"}, {"data": "2026-11-08", "nick": "Traubon", "classe": "Lutador", "pontos": 21913.0, "pos": 13, "cla": "PHOENIX", "id": "P022", "chave": "P022"}, {"data": "2026-11-08", "nick": "DarkKnighttt", "classe": "Cavaleiro", "pontos": 20164.0, "pos": 14, "cla": "PHOENIX", "id": "P006", "chave": "P006"}, {"data": "2026-11-08", "nick": "Nairobi", "classe": "Atalanta", "pontos": 19927.0, "pos": 15, "cla": "PHOENIX", "id": "P017", "chave": "P017"}, {"data": "2026-11-08", "nick": "COMANF", "classe": "Cavaleiro", "pontos": 19864.0, "pos": 16, "cla": "PHOENIX", "id": "P001", "chave": "P001"}, {"data": "2026-11-08", "nick": "kn0xyy", "classe": "Arqueira", "pontos": 19799.0, "pos": 17, "cla": "PHOENIX", "id": "H012", "chave": "H012"}, {"data": "2026-11-08", "nick": "Divoom", "classe": "Cavaleiro", "pontos": 18202.0, "pos": 18, "cla": "PHOENIX", "id": "P007", "chave": "P007"}, {"data": "2026-11-08", "nick": "VIVI", "classe": "Sacerdotisa", "pontos": 16677.0, "pos": 19, "cla": "PHOENIX", "id": "H025", "chave": "H025"}, {"data": "2026-11-08", "nick": "Ciborgue", "classe": "Mecânico", "pontos": 16604.0, "pos": 20, "cla": "PHOENIX", "id": "H005", "chave": "H005"}, {"data": "2026-11-08", "nick": "DanielRoX", "classe": "Pike", "pontos": 15298.0, "pos": 21, "cla": "PHOENIX", "id": "P005", "chave": "P005"}, {"data": "2026-11-08", "nick": "OPALA71", "classe": "Pike", "pontos": 14609.0, "pos": 22, "cla": "PHOENIX", "id": "H015", "chave": "H015"}, {"data": "2026-11-08", "nick": "Akimov", "classe": "Atalanta", "pontos": 13705.0, "pos": 23, "cla": "PHOENIX", "id": "H026", "chave": "H026"}], "dg": [{"data": "2026-11-06", "cla": "HYDRA", "nick": "CLEO", "id": "H002", "chave": "H002"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "TOSCAO", "id": "H024", "chave": "H024"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "Cleuza", "id": "H003", "chave": "H003"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "Bombado", "id": "H029", "chave": "H029"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "Patrão", "id": "H030", "chave": "H030"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "LastPriest", "id": "H001", "chave": "H001"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "ShowGirl", "id": "H021", "chave": "H021"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "Texugo", "id": "", "chave": "Texugo"}, {"data": "2026-11-06", "cla": "HYDRA", "nick": "DSTN00", "id": "H007", "chave": "H007"}]};
+
+(function(){
+const D = DATA;
+const SH = D.sheltons;
+const SH_AB = ["R","T","M","D","C"];
+const nf = new Intl.NumberFormat("pt-BR");
+const nf2 = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt = v => nf.format(Math.round(v));
+const kk = v => nf2.format(v);
+const dt = s => s ? s.slice(8,10)+"/"+s.slice(5,7) : "—";
+const dtl = s => s ? s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4) : "—";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sum = a => a.reduce((x,y)=>x+y,0);
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const compNome = (()=>{const [y,m]=D.competencia.split("-");return MESES[+m-1]+" de "+y})();
+const memById = Object.fromEntries(D.membros.map(m=>[m.id,m]));
+
+document.getElementById("stamp").innerHTML =
+  `Competência <b>${esc(compNome)}</b><br>Atualizado em <b>${esc(dtl(D.gerado_em.slice(0,10)))} às ${esc(D.gerado_em.slice(11))}</b>`;
+
+/* ---------- RESUMO ---------- */
+const ob = D.obrigacoes;
+const cobr = ob.filter(o=>o.status!=="ISENTO");
+const cnt = s => cobr.filter(o=>o.status===s).length;
+const nQ=cnt("QUITADO"), nP=cnt("PARCIAL"), nN=cnt("PENDENTE"), nI=ob.length-cobr.length;
+const capSum = (dev,rec) => sum(cobr.map(o=>Math.min(dev(o),rec(o))));
+const goldDev = sum(cobr.map(o=>o.gold_dev)), goldRec = capSum(o=>o.gold_dev,o=>o.gold_rec);
+const coinDev = sum(cobr.map(o=>o.coins_dev)), coinRec = capSum(o=>o.coins_dev,o=>o.coins_rec);
+const shDev = sum(cobr.map(o=>sum(o.sh_dev))), shRec = sum(cobr.map(o=>sum(o.sh_dev.map((v,i)=>Math.min(v,o.sh_rec[i])))));
+const gSaldo = D.caixa_gold.at(-1)?.saldo ?? 0, cSaldo = D.caixa_coins.at(-1)?.saldo ?? 0;
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const ativos = D.membros.filter(m=>m.situacao==="Ativo");
+const nPh = ativos.filter(m=>m.cla==="PHOENIX").length, nHy = ativos.filter(m=>m.cla==="HYDRA").length;
+
+document.getElementById("resumo-sub").textContent =
+  `${ativos.length} membros ativos (PHOENIX ${nPh} · HYDRA ${nHy}). ${cobr.length} obrigações no mês e ${nI} isentos. Os valores arrecadados contam só o que era devido: excedentes, doações e entregas de isentos ficam fora.`;
+
+const tile = (cls,label,big,foot,bar="") => `<div class="card tile ${cls}"><div class="label">${label}</div><div class="big num">${big}</div>${bar}<div class="foot">${foot}</div></div>`;
+const progress = (p,color) => `<div class="bar" role="img" aria-label="${p}%"><span style="width:${Math.min(100,p)}%;background:${color}"></span></div>`;
+document.getElementById("tiles").innerHTML = [
+  tile("goldc","Caixa Gold",`${kk(gSaldo)}<small>kk</small>`,`Saldo após ${D.caixa_gold.length} movimentos`),
+  tile("coinc","Caixa Coins",`${fmt(cSaldo)}`,`Saldo após ${D.caixa_coins.length} movimentos`),
+  tile("okc","Mensalidades quitadas",`${nQ}<small>de ${cobr.length}</small>`,
+    `<span class="s-PARCIAL">${nP} parciais</span> · <span class="s-PENDENTE">${nN} pendentes</span>`,
+    `<div class="bar" role="img" aria-label="${nQ} quitados, ${nP} parciais, ${nN} pendentes"><span style="width:${nQ/cobr.length*100}%;background:var(--ok)"></span><span style="width:${nP/cobr.length*100}%;background:var(--warn)"></span><span style="width:${nN/cobr.length*100}%;background:var(--bad)"></span></div>`),
+  tile("goldc","Gold arrecadado",`${fmt(goldRec)}<small>/ ${fmt(goldDev)} kk</small>`,`${pct(goldRec,goldDev)}% · faltam ${fmt(goldDev-goldRec)} kk`,progress(pct(goldRec,goldDev),"var(--gold)")),
+  tile("shc","Sheltons entregues",`${fmt(shRec)}<small>/ ${fmt(shDev)}</small>`,`${pct(shRec,shDev)}% · faltam ${fmt(shDev-shRec)}`,progress(pct(shRec,shDev),"#c08cff")),
+  tile("coinc","Coins arrecadados",`${fmt(coinRec)}<small>/ ${fmt(coinDev)}</small>`,`${pct(coinRec,coinDev)}% · só PHOENIX paga Coins`,progress(pct(coinRec,coinDev),"#9fb4ff")),
+].join("");
+
+/* ---------- CONTRIBUIÇÕES ---------- */
+const ORD = {PENDENTE:0,PARCIAL:1,QUITADO:2,ISENTO:3};
+function faltaTxt(o){
+  const p=[];
+  if(o.falta_gold>0) p.push(`<b>${kk(o.falta_gold).replace(",00","")}kk</b> Gold`);
+  const fs=o.falta_sh, tot=sum(fs);
+  if(tot>0){
+    if(fs.every(v=>v===fs[0])) p.push(`<b>${fs[0]} de cada</b> Shelton`);
+    else fs.forEach((v,i)=>{ if(v>0) p.push(`<b>${v}</b> ${SH[i]}${v>1?"s":""}`); });
+  }
+  if(o.falta_coins>0) p.push(`<b>${fmt(o.falta_coins)}</b> Coins`);
+  return p.join(" · ");
+}
+function playerCard(o){
+  const saiu = o.situacao && o.situacao!=="Ativo";
+  const cla = o.cla_atual || o.cla;
+  let body="";
+  if(o.status==="ISENTO"){
+    body = `<div class="small muted">Liderança, sem obrigação de mensalidade.</div>`;
+  } else {
+    const gP = o.gold_dev? Math.min(1,o.gold_rec/o.gold_dev):1;
+    const rows = [`<span class="k">Gold</span><span class="mini"><span style="width:${gP*100}%;background:var(--gold)"></span></span><span class="v">${kk(o.gold_rec).replace(",00","")}/${kk(o.gold_dev).replace(",00","")}kk</span>`];
+    if(o.coins_dev>0){
+      const cP=Math.min(1,o.coins_rec/o.coins_dev);
+      rows.push(`<span class="k">Coins</span><span class="mini"><span style="width:${cP*100}%;background:#9fb4ff"></span></span><span class="v">${fmt(Math.min(o.coins_rec,o.coins_dev))}/${fmt(o.coins_dev)}</span>`);
+    }
+    const dots = o.sh_dev.some(v=>v>0) ? `<div class="shdots" aria-label="Sheltons entregues por tipo">${o.sh_dev.map((dv,i)=>{
+        const r=Math.min(o.sh_rec[i],dv); const c = dv===0?"":(r>=dv?"full":(r>0?"part":""));
+        return `<b class="${c}" title="${SH[i]}: ${r} de ${dv}">${SH_AB[i]} ${r}/${dv}</b>`;}).join("")}</div>` : "";
+    const f = faltaTxt(o);
+    body = `<div class="res">${rows.join("")}</div>${dots}` +
+      (f ? `<div class="falta">Falta: ${f}</div>` : `<div class="okline">✓ Mês completo</div>`);
+  }
+  return `<article class="card pc st-${o.status}" data-cla="${esc(o.cla)}" data-st="${o.status}" data-nick="${esc(String(o.nick).toLowerCase())}">
+    <div class="top"><div><div class="name">${esc(o.nick)}</div>
+      <div class="meta"><span class="clan ${esc(o.cla)}">${esc(o.cla)}</span>${o.classe?`<span>${esc(o.classe)}</span>`:""}<span>${esc(o.id)}</span>${saiu?`<span class="tag-out">saiu da tag</span>`:""}</div></div>
+      <span class="pill s-${o.status}">${o.status}</span></div>${body}</article>`;
+}
+const sorted = [...ob].sort((a,b)=>(ORD[a.status]-ORD[b.status]) || String(a.nick).localeCompare(String(b.nick),"pt-BR",{sensitivity:"base"}));
+const playersEl = document.getElementById("players");
+let filt="all", q="";
+function renderPlayers(){
+  const list = sorted.filter(o=>{
+    if(filt==="PHOENIX"||filt==="HYDRA"){ if(o.cla!==filt) return false; }
+    else if(filt!=="all"){ if(o.status!==filt) return false; }
+    return !q || String(o.nick).toLowerCase().includes(q) || String(o.id).toLowerCase().includes(q);
+  });
+  playersEl.innerHTML = list.length ? list.map(playerCard).join("") : `<div class="empty">Nenhum membro encontrado com esse filtro.</div>`;
+}
+document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
+  filt=b.dataset.f; document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); renderPlayers();
+}));
+document.getElementById("busca").addEventListener("input",e=>{q=e.target.value.trim().toLowerCase();renderPlayers();});
+renderPlayers();
+
+/* ---------- GRÁFICO DE LINHA ---------- */
+function lineChart(el, pts, opt){
+  // pts: [{x:label, y:value}]
+  const W=560,H=220,L=48,R=16,T=16,B=30;
+  if(!pts.length){el.innerHTML='<p class="muted small">Sem dados.</p>';return;}
+  const ys=pts.map(p=>p.y); let mx=Math.max(...ys), mn=Math.min(0,...ys);
+  const step = niceStep((mx-mn)/4); mx=Math.ceil(mx/step)*step; mn=Math.floor(mn/step)*step;
+  const xs = i => L + (pts.length===1?(W-L-R)/2: i*(W-L-R)/(pts.length-1));
+  const y = v => T + (H-T-B)*(1-(v-mn)/(mx-mn||1));
+  let g="";
+  for(let v=mn; v<=mx+1e-9; v+=step){ g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${opt.fy(v)}</text>`; }
+  const path = pts.map((p,i)=>`${i?"L":"M"}${xs(i).toFixed(1)},${y(p.y).toFixed(1)}`).join("");
+  const area = path+`L${xs(pts.length-1).toFixed(1)},${y(mn)}L${xs(0).toFixed(1)},${y(mn)}Z`;
+  const every = Math.max(1,Math.ceil(pts.length/7));
+  let lab=""; pts.forEach((p,i)=>{ if(i%every===0||i===pts.length-1) lab+=`<text x="${xs(i)}" y="${H-8}" text-anchor="middle">${esc(p.x)}</text>`; });
+  const last=pts.length-1;
+  const dots = opt.dots ? pts.map((p,i)=>`<circle cx="${xs(i)}" cy="${y(p.y)}" r="3.5" fill="${opt.color}"><title>${esc(p.x)}: ${opt.fy(p.y)}</title></circle>`).join("") : "";
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label)}">
+    <defs><linearGradient id="g-${el.id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${opt.color}" stop-opacity=".35"/><stop offset="1" stop-color="${opt.color}" stop-opacity="0"/></linearGradient></defs>
+    ${g}<path d="${area}" fill="url(#g-${el.id})"/><path d="${path}" fill="none" stroke="${opt.color}" stroke-width="2.2" stroke-linejoin="round"/>
+    ${dots}<circle cx="${xs(last)}" cy="${y(pts[last].y)}" r="5" fill="${opt.color}" stroke="var(--panel)" stroke-width="2"/>
+    <text x="${Math.min(xs(last),W-R)}" y="${y(pts[last].y)-10}" text-anchor="end" style="fill:var(--text);font-weight:700;font-size:13px">${opt.fy(pts[last].y)}</text>
+    ${lab}</svg>`;
+}
+function niceStep(r){ if(r<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(r))); const f=r/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+
+/* ---------- CAIXAS ---------- */
+function dailyLast(rows){ const m=new Map(); rows.forEach(r=>m.set(r.data,r.saldo)); return [...m].map(([d,v])=>({x:dt(d),y:v})); }
+lineChart(document.getElementById("chart-gold"), dailyLast(D.caixa_gold), {color:"var(--gold)",fy:v=>kk(v).replace(",00",""),label:"Saldo do caixa de Gold por dia",dots:true});
+lineChart(document.getElementById("chart-coins"), dailyLast(D.caixa_coins), {color:"#9fb4ff",fy:v=>fmt(v),label:"Saldo do caixa de Coins por dia",dots:true});
+function extrato(rows, fv, hasCat){
+  const tr = [...rows].reverse().map(r=>{
+    const ent = r.tipo==="Entrada";
+    return `<tr><td class="num">${dt(r.data)}</td><td>${esc(r.desc)}<div class="small muted">${esc(r.resp)}${hasCat&&r.cat?" · "+esc(r.cat):""}</div>${r.obs?`<details><summary>detalhes</summary><p>${esc(r.obs)}</p></details>`:""}</td>
+      <td class="r ${ent?"in":"out"}">${ent?"+":"−"}${fv(r.valor)}</td><td class="r">${fv(r.saldo)}</td></tr>`;}).join("");
+  return `<table><thead><tr><th>Data</th><th>Movimento</th><th class="r">Valor</th><th class="r">Saldo</th></tr></thead><tbody>${tr}</tbody></table>`;
+}
+document.getElementById("ext-gold").innerHTML = extrato(D.caixa_gold, kk, true);
+document.getElementById("ext-coins").innerHTML = extrato(D.caixa_coins, fmt, false);
+
+/* ---------- SHELTONS ---------- */
+document.getElementById("sh-types").innerHTML = SH.map((s,i)=>{
+  const dev=sum(cobr.map(o=>o.sh_dev[i])), rec=sum(cobr.map(o=>Math.min(o.sh_dev[i],o.sh_rec[i])));
+  const out=sum(D.saidas_sheltons.filter(x=>x.tipo==="Retirada").map(x=>x.sh[i]));
+  return `<div class="card shc"><div class="t">${s}</div>${progress(pct(rec,dev),"#c08cff")}
+    <div class="row" style="margin-top:8px"><span>Entregue</span><b>${fmt(rec)} / ${fmt(dev)}</b></div>
+    <div class="row"><span>Falta</span><b>${fmt(dev-rec)}</b></div>
+    <div class="row"><span>Saiu p/ DG</span><b>${fmt(out)}</b></div></div>`;}).join("");
+// Saídas agrupadas por finalidade
+const grupos = new Map();
+D.saidas_sheltons.forEach(s=>{ const k=s.fim||"Outros"; if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(s); });
+let shtr="";
+[...grupos].reverse().forEach(([fim,arr])=>{
+  const tot = SH.map((_,i)=>sum(arr.filter(a=>a.tipo==="Retirada").map(a=>a.sh[i])));
+  shtr += `<tr><td colspan="7" style="background:var(--panel-2)"><b>${esc(fim)}</b> <span class="muted small">· ${arr.length} lançamentos · retirado do baú: ${fmt(sum(tot))}</span></td></tr>`;
+  arr.forEach(a=>{ shtr += `<tr><td>${esc(a.nick)}<div class="small muted">${esc(a.tipo)}${a.id?" · "+esc(a.id):""}</div></td>${a.sh.map(v=>`<td class="r">${v||"–"}</td>`).join("")}<td class="r"><b>${sum(a.sh)}</b></td></tr>`; });
+});
+document.getElementById("sh-saidas").innerHTML = `<table><thead><tr><th>Player</th>${SH_AB.map(a=>`<th class="r">${a}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>${shtr}</tbody></table>`;
+const doa = D.recebimentos.filter(r=>r.comp.toUpperCase().startsWith("DOA"));
+document.getElementById("sh-doacoes").innerHTML = doa.length
+  ? `<table><thead><tr><th>Data</th><th>Doador</th>${SH_AB.map(a=>`<th class="r">${a}</th>`).join("")}</tr></thead><tbody>${doa.map(r=>`<tr><td class="num">${dt(r.data)}</td><td>${esc(r.nick)}</td>${r.sh.map(v=>`<td class="r">${v||"–"}</td>`).join("")}</tr>`).join("")}
+     <tr><td colspan="2"><b>Total doado</b></td>${SH.map((_,i)=>`<td class="r"><b>${sum(doa.map(r=>r.sh[i]))||"–"}</b></td>`).join("")}</tr></tbody></table>`
+  : `<p class="muted small" style="padding:12px">Nenhuma doação de Sheltons registrada.</p>`;
+
+/* ---------- BLESS CASTLE ---------- */
+const eds = [...new Set(D.bc.map(b=>b.data))].sort();
+const elenco = ativos.filter(m=>m.cla==="PHOENIX");
+const ptsOf = (id,ed) => sum(D.bc.filter(b=>b.chave===id && b.data===ed).map(b=>b.pontos));
+const faixa = (n,m) => n===0?["SEM REGISTRO","f-cu"]: n<2?["AMOSTRA CURTA","f-cu"]: m<30000?["DIFICULDADE","f-di"]: m<40000?["ATENÇÃO","f-at"]: m<50000?["APERFEIÇOAR","f-ap"]:["REFERÊNCIA 50K+","f-ref"];
+const mediaEd = eds.map(ed=>{ const v=elenco.map(m=>ptsOf(m.id,ed)).filter(x=>x>0); return {x:dt(ed), y: v.length? sum(v)/v.length:0, n:v.length}; });
+lineChart(document.getElementById("chart-bc"), mediaEd, {color:"var(--phoenix)",fy:v=>fmt(v),label:"Média de pontos do elenco PHOENIX por edição do Bless Castle",dots:true});
+const lastEd = eds.at(-1);
+const top = D.bc.filter(b=>b.data===lastEd).sort((a,b)=>b.pontos-a.pontos).slice(0,5);
+const maxTop = top[0]?.pontos||1;
+document.getElementById("bc-top").innerHTML = `<p class="small muted" style="margin:6px 0 10px">Edição de ${dtl(lastEd)} · ${D.bc.filter(b=>b.data===lastEd).length} participantes · média do elenco ${fmt(mediaEd.at(-1)?.y||0)}</p>` +
+  top.map((b,i)=>`<div style="display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;margin:8px 0">
+    <span class="pos ${i===0?"top":""}">${b.pos||i+1}</span>
+    <div><div style="font-weight:600">${esc(memById[b.chave]?.nick||b.nick)} <span class="small muted">${esc(b.classe)}</span></div>
+      <div class="bar" style="margin-top:4px;height:6px"><span style="width:${b.pontos/maxTop*100}%;background:var(--phoenix)"></span></div></div>
+    <b class="num">${fmt(b.pontos)}</b></div>`).join("");
+function spark(vals){
+  const W=110,H=28,p=3; const v=vals.map(x=>x||null); const nz=v.filter(x=>x!==null);
+  if(nz.length<2) return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"></svg>`;
+  const mx=Math.max(...nz), mn=Math.min(...nz);
+  const X=i=>p+i*(W-2*p)/(v.length-1), Y=x=>H-p-(H-2*p)*((x-mn)/((mx-mn)||1));
+  let d="",started=false; v.forEach((x,i)=>{ if(x===null) return; d+=(started?"L":"M")+X(i).toFixed(1)+","+Y(x).toFixed(1); started=true; });
+  const li=v.map((x,i)=>x!==null?i:-1).filter(i=>i>=0).at(-1);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--phoenix)" stroke-width="1.8"/><circle cx="${X(li)}" cy="${Y(v[li])}" r="2.6" fill="var(--phoenix)"/></svg>`;
+}
+const rowsEl = elenco.map(m=>{ const v=eds.map(ed=>ptsOf(m.id,ed)); const pl=v.filter(x=>x>0); const med=pl.length?sum(pl)/pl.length:0; return {m,v,n:pl.length,med}; })
+  .sort((a,b)=>b.med-a.med);
+document.getElementById("bc-elenco").innerHTML = `<table><thead><tr><th>Player</th>${eds.map(e=>`<th class="r">${dt(e)}</th>`).join("")}<th class="r">BCs</th><th class="r">Média</th><th>Evolução</th><th>Faixa</th></tr></thead><tbody>${
+  rowsEl.map(r=>{ const [f,c]=faixa(r.n,r.med); return `<tr><td><b>${esc(r.m.nick)}</b> <span class="small muted">${esc(r.m.classe)}</span></td>${r.v.map(x=>`<td class="r">${x?fmt(x):'<span class="muted">–</span>'}</td>`).join("")}<td class="r">${r.n}</td><td class="r"><b>${r.n?fmt(r.med):"–"}</b></td><td>${spark(r.v)}</td><td><span class="faixa ${c}">${f}</span></td></tr>`;}).join("")
+}<tr><td><b>Média do elenco</b></td>${mediaEd.map(e=>`<td class="r"><b>${e.n?fmt(e.y):"–"}</b></td>`).join("")}<td colspan="4"></td></tr></tbody></table>`;
+
+/* ---------- DUNGEON ---------- */
+document.getElementById("buff").innerHTML = [["+15%","Taxa de drop"],["+10%","Dano em bosses"],["+5%","HP"],["+5%","Mana"],["+5%","Resistência"],["+1","Velocidade"]]
+  .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+const dgs = new Map(); D.dg.forEach(r=>{ const k=r.data+"|"+r.cla; if(!dgs.has(k)) dgs.set(k,[]); dgs.get(k).push(r); });
+document.getElementById("dg-hist").innerHTML = dgs.size
+  ? `<table><thead><tr><th>Data</th><th>Clã</th><th class="r">Presentes</th><th>Quem foi</th></tr></thead><tbody>${[...dgs].reverse().map(([k,arr])=>{const [d,c]=k.split("|");return `<tr><td class="num">${dtl(d)}</td><td><span class="clan ${esc(c)}">${esc(c)}</span></td><td class="r">${arr.length}</td><td class="small">${arr.map(a=>esc(memById[a.chave]?.nick||a.nick)).join(", ")}</td></tr>`;}).join("")}</tbody></table>`
+  : `<p class="muted small" style="padding:12px">Nenhuma DG registrada ainda.</p>`;
+const dgCla = c => new Set(D.dg.filter(r=>r.cla===c).map(r=>r.data)).size;
+const freq = ativos.map(m=>{ const tot=dgCla(m.cla); const pres=new Set(D.dg.filter(r=>r.chave===m.id).map(r=>r.data)).size;
+  const p = tot? pres/tot : null;
+  const sit = !tot ? ["SEM DG NO CLÃ","f-cu"] : pres===0 ? ["NUNCA FOI","f-di"] : p>=.75 ? ["FREQUENTE","f-ap"] : p>=.4 ? ["REGULAR","f-at"] : ["POUCO FREQUENTE","f-di"];
+  return {m,tot,pres,p,sit}; })
+  .sort((a,b)=> (a.m.cla===b.m.cla?0:(a.m.cla==="HYDRA"?-1:1)) || ((b.p??-1)-(a.p??-1)) || a.m.nick.localeCompare(b.m.nick,"pt-BR",{sensitivity:"base"}));
+document.getElementById("dg-freq").innerHTML = `<table><thead><tr><th>Player</th><th>Clã</th><th class="r">Foi</th><th class="r">DGs do clã</th><th>Situação</th></tr></thead><tbody>${
+  freq.map(f=>`<tr><td><b>${esc(f.m.nick)}</b></td><td><span class="clan ${esc(f.m.cla)}">${esc(f.m.cla)}</span></td><td class="r">${f.pres}</td><td class="r">${f.tot}</td><td><span class="faixa ${f.sit[1]}">${f.sit[0]}</span></td></tr>`).join("")}</tbody></table>`;
+
+/* ---------- REGRAS / RODAPÉ ---------- */
+document.getElementById("regra-mens").innerHTML = `<li><b>${fmt(D.config.gold)}kk de Gold</b> por membro.</li><li><b>${fmt(D.config.sheltons)} de cada Shelton</b>: ${SH.join(", ")}.</li><li><b>${fmt(D.config.coins_phoenix)} Coins</b>, só para membros da PHOENIX.</li><li>Prazo e cobrança são definidos pela liderança a cada mês.</li>`;
+document.getElementById("foot").innerHTML = `Dados extraídos da planilha oficial de gestão da tag em ${esc(dtl(D.gerado_em.slice(0,10)))} às ${esc(D.gerado_em.slice(11))}. Encontrou algo errado? Fale com a liderança.`;
+})();
+</script>
+</body>
+</html>
