@@ -105,6 +105,21 @@ section{padding:34px 0 8px}
 .fbtn:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 14px;font:inherit;min-width:200px;flex:1;max-width:280px}
 
+
+/* Membros */
+.roster{padding:0;overflow:hidden}
+.roster .rh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.roster.PHOENIX .rh{background:linear-gradient(90deg,rgba(255,122,61,.16),transparent)}
+.roster.HYDRA .rh{background:linear-gradient(90deg,rgba(53,194,176,.16),transparent)}
+.roster .rh .cn{font-family:var(--display);font-size:20px;letter-spacing:.06em}
+.roster.PHOENIX .cn{color:var(--phoenix)} .roster.HYDRA .cn{color:var(--hydra)}
+.roster .rh .ct{font-family:var(--cond);font-weight:700;font-size:26px}
+.roster .rh .ct small{font-size:13px;color:var(--muted);font-weight:600;margin-left:4px;letter-spacing:.06em}
+.classes{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.classes span{font-family:var(--cond);font-size:13px;font-weight:600;background:var(--panel-2);color:var(--muted);padding:2px 8px;border-radius:4px}
+.classes span b{color:var(--text);margin-left:4px}
+.roster table td{padding:7px 14px} .roster table th{padding:8px 14px}
+.lead{font-family:var(--cond);font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--gold);border:1px solid rgba(229,185,78,.5);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
 /* Cartões de player */
 .players{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
 .pc{display:flex;flex-direction:column;gap:10px;border-left:4px solid var(--line)}
@@ -196,6 +211,7 @@ footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
 <nav aria-label="Seções">
   <div class="wrap">
     <a href="#resumo">Resumo</a>
+    <a href="#membros">Membros</a>
     <a href="#contribuicoes">Contribuições</a>
     <a href="#caixas">Caixas</a>
     <a href="#sheltons">Sheltons</a>
@@ -209,6 +225,12 @@ footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
   <section id="resumo">
     <div class="sec-head"><div><h2>Resumo do mês</h2><p id="resumo-sub"></p></div></div>
     <div class="grid tiles" id="tiles"></div>
+  </section>
+
+  <section id="membros">
+    <div class="sec-head"><div><h2>Membros</h2><p id="membros-sub">Todos os membros ativos da tag, separados por clã, com a classe e a situação na mensalidade do mês.</p></div></div>
+    <div class="grid two" id="roster"></div>
+    <details style="margin-top:14px" class="card"><summary id="ex-sum">Ex-membros e personagens inativos</summary><div class="tbl-wrap" style="margin-top:10px" id="ex-membros"></div></details>
   </section>
 
   <section id="contribuicoes">
@@ -450,6 +472,26 @@ document.getElementById("tiles").innerHTML = [
   tile("shc","Sheltons entregues",`${fmt(shRec)}<small>/ ${fmt(shDev)}</small>`,`${pct(shRec,shDev)}% · faltam ${fmt(shDev-shRec)}`,progress(pct(shRec,shDev),"#c08cff")),
   tile("coinc","Coins arrecadados",`${fmt(coinRec)}<small>/ ${fmt(coinDev)}</small>`,`${pct(coinRec,coinDev)}% · só PHOENIX paga Coins`,progress(pct(coinRec,coinDev),"#9fb4ff")),
 ].join("");
+
+
+/* ---------- MEMBROS ---------- */
+const CLS={KS:"Cavaleiro",AS:"Arqueira",PS:"Pike",ATA:"Atalanta",FS:"Lutador",MG:"Mago",MS:"Mecânico",SACER:"Sacerdotisa"};
+const obById=Object.fromEntries(D.obrigacoes.map(o=>[o.id,o]));
+const isLead=m=>/L[ií]der/i.test(m.obs||"");
+function rosterCard(cla){
+  const ms=ativos.filter(m=>m.cla===cla).sort((a,b)=>(isLead(b)-isLead(a))||a.nick.localeCompare(b.nick,"pt-BR",{sensitivity:"base"}));
+  const byCls={}; ms.forEach(m=>{const c=CLS[m.classe]||m.classe||"?"; byCls[c]=(byCls[c]||0)+1;});
+  const chips=Object.entries(byCls).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<span>${esc(c)}<b>${n}</b></span>`).join("");
+  const rows=ms.map(m=>{const o=obById[m.id]; const st=o?o.status:"—";
+    return `<tr><td><b>${esc(m.nick)}</b>${isLead(m)?'<span class="lead">LÍDER</span>':""}</td><td>${esc(CLS[m.classe]||m.classe||"—")}</td><td class="muted num">${esc(m.id)}</td><td>${o?`<span class="pill s-${st}">${st}</span>`:'<span class="muted small">sem cobrança</span>'}</td></tr>`;}).join("");
+  return `<div class="card roster ${cla}"><div class="rh"><span class="cn">${cla}</span><span class="ct num">${ms.length}<small>MEMBROS</small></span></div>
+    <div class="classes">${chips}</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Nick</th><th>Classe</th><th>ID</th><th>Novembro</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+document.getElementById("roster").innerHTML = rosterCard("PHOENIX")+rosterCard("HYDRA");
+const inat=D.membros.filter(m=>m.situacao!=="Ativo").sort((a,b)=>a.nick.localeCompare(b.nick,"pt-BR",{sensitivity:"base"}));
+document.getElementById("ex-sum").textContent=`Ex-membros e personagens inativos (${inat.length})`;
+document.getElementById("ex-membros").innerHTML=`<table><thead><tr><th>Nick</th><th>Classe</th><th>ID</th><th>Observação</th></tr></thead><tbody>${inat.map(m=>`<tr><td><b>${esc(m.nick)}</b></td><td>${esc(CLS[m.classe]||m.classe||"—")}</td><td class="muted num">${esc(m.id)}</td><td class="small muted">${esc(m.obs||"")}</td></tr>`).join("")}</tbody></table>`;
 
 /* ---------- CONTRIBUIÇÕES ---------- */
 const ORD = {PENDENTE:0,PARCIAL:1,QUITADO:2,ISENTO:3};
