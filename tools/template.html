@@ -119,6 +119,7 @@ section{padding:34px 0 8px}
 .classes span{font-family:var(--cond);font-size:13px;font-weight:600;background:var(--panel-2);color:var(--muted);padding:2px 8px;border-radius:4px}
 .classes span b{color:var(--text);margin-left:4px}
 .roster table td{padding:7px 14px} .roster table th{padding:8px 14px}
+.lead.vice{color:var(--muted);border-color:var(--line)}
 .lead{font-family:var(--cond);font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--gold);border:1px solid rgba(229,185,78,.5);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
 /* Cartões de player */
 .players{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
@@ -477,13 +478,13 @@ document.getElementById("tiles").innerHTML = [
 /* ---------- MEMBROS ---------- */
 const CLS={KS:"Cavaleiro",AS:"Arqueira",PS:"Pike",ATA:"Atalanta",FS:"Lutador",MG:"Mago",MS:"Mecânico",SACER:"Sacerdotisa"};
 const obById=Object.fromEntries(D.obrigacoes.map(o=>[o.id,o]));
-const isLead=m=>/L[ií]der/i.test(m.obs||"");
+const isLead=m=>/^L[ÍI]DER\b/.test(m.obs||""); const isVice=m=>/^VICE-L[ÍI]DER/.test(m.obs||""); const rank=m=>isLead(m)?2:isVice(m)?1:0;
 function rosterCard(cla){
-  const ms=ativos.filter(m=>m.cla===cla).sort((a,b)=>(isLead(b)-isLead(a))||a.nick.localeCompare(b.nick,"pt-BR",{sensitivity:"base"}));
+  const ms=ativos.filter(m=>m.cla===cla).sort((a,b)=>(rank(b)-rank(a))||a.nick.localeCompare(b.nick,"pt-BR",{sensitivity:"base"}));
   const byCls={}; ms.forEach(m=>{const c=CLS[m.classe]||m.classe||"?"; byCls[c]=(byCls[c]||0)+1;});
   const chips=Object.entries(byCls).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<span>${esc(c)}<b>${n}</b></span>`).join("");
   const rows=ms.map(m=>{const o=obById[m.id]; const st=o?o.status:"—";
-    return `<tr><td><b>${esc(m.nick)}</b>${isLead(m)?'<span class="lead">LÍDER</span>':""}</td><td>${esc(CLS[m.classe]||m.classe||"—")}</td><td class="muted num">${esc(m.id)}</td><td>${o?`<span class="pill s-${st}">${st}</span>`:'<span class="muted small">sem cobrança</span>'}</td></tr>`;}).join("");
+    return `<tr><td><b>${esc(m.nick)}</b>${isLead(m)?'<span class="lead">LÍDER</span>':isVice(m)?'<span class="lead vice">VICE</span>':""}</td><td>${esc(CLS[m.classe]||m.classe||"—")}</td><td class="muted num">${esc(m.id)}</td><td>${o?`<span class="pill s-${st}">${st}</span>`:'<span class="muted small">sem cobrança</span>'}</td></tr>`;}).join("");
   return `<div class="card roster ${cla}"><div class="rh"><span class="cn">${cla}</span><span class="ct num">${ms.length}<small>MEMBROS</small></span></div>
     <div class="classes">${chips}</div>
     <div style="overflow-x:auto"><table><thead><tr><th>Nick</th><th>Classe</th><th>ID</th><th>Novembro</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -528,7 +529,7 @@ function playerCard(o){
   }
   return `<article class="card pc st-${o.status}" data-cla="${esc(o.cla)}" data-st="${o.status}" data-nick="${esc(String(o.nick).toLowerCase())}">
     <div class="top"><div><div class="name">${esc(o.nick)}</div>
-      <div class="meta"><span class="clan ${esc(o.cla)}">${esc(o.cla)}</span>${o.classe?`<span>${esc(o.classe)}</span>`:""}<span>${esc(o.id)}</span>${saiu?`<span class="tag-out">saiu da tag</span>`:""}</div></div>
+      <div class="meta"><span class="clan ${esc(o.cla)}">${esc(o.cla)}</span>${o.classe?`<span>${esc(o.classe)}</span>`:""}<span>${esc(o.id)}</span>${saiu?`<span class="tag-out">saiu da tag</span>`:(o.cla_atual&&o.cla_atual!==o.cla?`<span class="tag-out">agora ${esc(o.cla_atual)}</span>`:"")}</div></div>
       <span class="pill s-${o.status}">${o.status}</span></div>${body}</article>`;
 }
 const sorted = [...ob].sort((a,b)=>(ORD[a.status]-ORD[b.status]) || String(a.nick).localeCompare(String(b.nick),"pt-BR",{sensitivity:"base"}));
