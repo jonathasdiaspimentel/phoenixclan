@@ -9,5 +9,8 @@ Os dados vêm da planilha oficial de gestão da liderança e são atualizados a 
 
 ```
 python3 tools/build_data.py planilha.xlsx data.json
-python3 tools/render.py data.json index.html
+python3 tools/render.py data.json painel.html
+DASH_PASSWORD='senha-do-cla' python3 tools/encrypt.py painel.html index.html
 ```
+
+O `index.html` publicado é criptografado (AES-256-GCM, chave PBKDF2-SHA256 com 600 mil iterações). A senha não fica salva no repositório.

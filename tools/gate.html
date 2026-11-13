@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel PHOENIX + HYDRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0d1117;--panel:#151b24;--line:#2a3443;--text:#e8e4da;--muted:#93a0b2;--phoenix:#ff7a3d;--hydra:#35c2b0;--gold:#e5b94e;--bad:#ef5b5b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ink);color:var(--text);font-family:"Barlow",system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;
+  background-image:radial-gradient(700px 400px at 20% 0%,rgba(255,122,61,.14),transparent 60%),radial-gradient(700px 400px at 90% 10%,rgba(53,194,176,.10),transparent 60%)}
+.box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.crest{font-size:40px;line-height:1}
+h1{font-family:"Cinzel",Georgia,serif;font-size:26px;letter-spacing:.06em;margin:10px 0 4px}
+h1 .p{color:var(--phoenix)} h1 .h{color:var(--hydra)} h1 .a{color:var(--muted);font-size:.6em;margin:0 .2em}
+p{color:var(--muted);margin:0 0 18px;font-size:14px}
+label.f{display:block;text-align:left;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type=password]{width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:#0f141c;color:var(--text);font:inherit;font-size:16px}
+input[type=password]:focus{outline:2px solid var(--gold);outline-offset:1px}
+.rem{display:flex;align-items:center;gap:8px;justify-content:flex-start;margin:12px 0 16px;font-size:14px;color:var(--muted)}
+button{width:100%;padding:12px;border:0;border-radius:8px;background:var(--phoenix);color:#1a0c05;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:12px}
+.foot{margin-top:16px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main class="box">
+  <div class="crest" aria-hidden="true">🔥</div>
+  <h1><span class="p">PHOENIX</span><span class="a">&amp;</span><span class="h">HYDRA</span></h1>
+  <p>Painel exclusivo dos membros. Digite a senha do clã para entrar.</p>
+  <form id="f" autocomplete="off">
+    <label class="f" for="pw">Senha</label>
+    <input id="pw" type="password" autocomplete="current-password" required autofocus>
+    <label class="rem"><input id="rem" type="checkbox"> Lembrar neste aparelho</label>
+    <button id="go" type="submit">Entrar</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+  <div class="foot">Não tem a senha? Peça à liderança no grupo do clã.</div>
+</main>
+<script>
+const P={salt:"__SALT__",iv:"__IV__",ct:"__CT__",iter:__ITER__};
+const KEY="phx-dash-key";
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveRaw(pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:b64(P.salt),iterations:P.iter,hash:"SHA-256"},base,256));
+}
+async function openWith(raw){
+  const key=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["decrypt"]);
+  const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(P.iv)},key,b64(P.ct));
+  const html=new TextDecoder().decode(buf);
+  document.open(); document.write(html); document.close();
+}
+// chave lembrada (só funciona enquanto a senha e o salt não mudarem)
+(async()=>{try{const s=localStorage.getItem(KEY); if(s){const o=JSON.parse(s); if(o.salt===P.salt){await openWith(b64(o.k)); return;} localStorage.removeItem(KEY);} }catch(e){try{localStorage.removeItem(KEY)}catch(_){}}})();
+document.getElementById("f").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const btn=document.getElementById("go"), err=document.getElementById("err");
+  btn.disabled=true; btn.textContent="Verificando…"; err.textContent="";
+  try{
+    const raw=await deriveRaw(document.getElementById("pw").value);
+    if(document.getElementById("rem").checked){ try{localStorage.setItem(KEY,JSON.stringify({salt:P.salt,k:btoa(String.fromCharCode(...raw))}))}catch(_){} }
+    await openWith(raw);
+  }catch(x){
+    err.textContent="Senha incorreta. Tente de novo.";
+    btn.disabled=false; btn.textContent="Entrar";
+  }
+});
+</script>
+</body>
+</html>
