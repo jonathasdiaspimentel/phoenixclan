@@ -187,6 +187,22 @@ details p{margin:6px 0 0;font-size:13px;color:var(--muted);max-width:70ch}
 .rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
 .rules li{margin:3px 0} .rules li b{color:var(--text)}
 
+
+/* Área protegida */
+.lk-hide{display:none!important}
+.lockbox{max-width:520px;margin:4px auto 0;text-align:center;padding:26px 22px;border-top:3px solid var(--gold)}
+.lockbox .lk-ico{font-size:30px}
+.lockbox .lk-t{font-family:var(--display);font-size:20px;letter-spacing:.05em;margin-top:6px}
+.lockbox p{color:var(--muted);font-size:14px;margin:8px auto 16px;max-width:42ch}
+.lockbox .lk-l{display:block;text-align:left;font-size:13px;color:var(--muted);margin-bottom:6px}
+.lockbox .lk-row{display:flex;gap:8px}
+.lockbox input[type=password]{flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#0f141c;color:var(--text);font:inherit;font-size:16px}
+.lockbox button{padding:10px 16px;border:0;border-radius:8px;background:var(--phoenix);color:#1a0c05;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+.lockbox button:disabled{opacity:.6;cursor:wait}
+.lockbox input:focus-visible,.lockbox button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.lockbox .lk-rem{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px;font-size:14px;color:var(--muted)}
+.lockbox .lk-err{color:var(--bad);font-size:14px;min-height:20px;margin-top:8px}
+nav .lk{font-size:11px}
 footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
 
 @media (max-width:560px){.stamp{text-align:left}.tile{padding:12px}.tile .big{font-size:26px}.tile .big small{font-size:14px}}
@@ -424,6 +440,7 @@ footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
 })();
 
 const DATA = /*DATA*/null;
+const ENC = /*ENC*/null;
 
 (function(){
 const D = DATA;
@@ -453,7 +470,7 @@ const capSum = (dev,rec) => sum(cobr.map(o=>Math.min(dev(o),rec(o))));
 const goldDev = sum(cobr.map(o=>o.gold_dev)), goldRec = capSum(o=>o.gold_dev,o=>o.gold_rec);
 const coinDev = sum(cobr.map(o=>o.coins_dev)), coinRec = capSum(o=>o.coins_dev,o=>o.coins_rec);
 const shDev = sum(cobr.map(o=>sum(o.sh_dev))), shRec = sum(cobr.map(o=>sum(o.sh_dev.map((v,i)=>Math.min(v,o.sh_rec[i])))));
-const gSaldo = D.caixa_gold.at(-1)?.saldo ?? 0, cSaldo = D.caixa_coins.at(-1)?.saldo ?? 0;
+let gSaldo = null, cSaldo = null;
 const pct = (a,b) => b ? Math.round(a/b*100) : 0;
 const ativos = D.membros.filter(m=>m.situacao==="Ativo");
 const nPh = ativos.filter(m=>m.cla==="PHOENIX").length, nHy = ativos.filter(m=>m.cla==="HYDRA").length;
@@ -463,9 +480,11 @@ document.getElementById("resumo-sub").textContent =
 
 const tile = (cls,label,big,foot,bar="") => `<div class="card tile ${cls}"><div class="label">${label}</div><div class="big num">${big}</div>${bar}<div class="foot">${foot}</div></div>`;
 const progress = (p,color) => `<div class="bar" role="img" aria-label="${p}%"><span style="width:${Math.min(100,p)}%;background:${color}"></span></div>`;
+function renderTiles(){
+const lockedTile = (cls,label) => tile(cls,label,`🔒`,`Área protegida · desbloqueie em <a href="#caixas">Caixas</a>`);
 document.getElementById("tiles").innerHTML = [
-  tile("goldc","Caixa Gold",`${kk(gSaldo)}<small>kk</small>`,`Saldo após ${D.caixa_gold.length} movimentos`),
-  tile("coinc","Caixa Coins",`${fmt(cSaldo)}`,`Saldo após ${D.caixa_coins.length} movimentos`),
+  gSaldo===null ? lockedTile("goldc","Caixa Gold") : tile("goldc","Caixa Gold",`${kk(gSaldo)}<small>kk</small>`,`Saldo após ${D.caixa_gold.length} movimentos`),
+  cSaldo===null ? lockedTile("coinc","Caixa Coins") : tile("coinc","Caixa Coins",`${fmt(cSaldo)}`,`Saldo após ${D.caixa_coins.length} movimentos`),
   tile("okc","Mensalidades quitadas",`${nQ}<small>de ${cobr.length}</small>`,
     `<span class="s-PARCIAL">${nP} parciais</span> · <span class="s-PENDENTE">${nN} pendentes</span>`,
     `<div class="bar" role="img" aria-label="${nQ} quitados, ${nP} parciais, ${nN} pendentes"><span style="width:${nQ/cobr.length*100}%;background:var(--ok)"></span><span style="width:${nP/cobr.length*100}%;background:var(--warn)"></span><span style="width:${nN/cobr.length*100}%;background:var(--bad)"></span></div>`),
@@ -473,6 +492,8 @@ document.getElementById("tiles").innerHTML = [
   tile("shc","Sheltons entregues",`${fmt(shRec)}<small>/ ${fmt(shDev)}</small>`,`${pct(shRec,shDev)}% · faltam ${fmt(shDev-shRec)}`,progress(pct(shRec,shDev),"#c08cff")),
   tile("coinc","Coins arrecadados",`${fmt(coinRec)}<small>/ ${fmt(coinDev)}</small>`,`${pct(coinRec,coinDev)}% · só PHOENIX paga Coins`,progress(pct(coinRec,coinDev),"#9fb4ff")),
 ].join("");
+}
+renderTiles();
 
 
 /* ---------- MEMBROS ---------- */
@@ -576,6 +597,7 @@ function lineChart(el, pts, opt){
 function niceStep(r){ if(r<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(r))); const f=r/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
 
 /* ---------- CAIXAS ---------- */
+function renderCaixas(){
 function dailyLast(rows){ const m=new Map(); rows.forEach(r=>m.set(r.data,r.saldo)); return [...m].map(([d,v])=>({x:dt(d),y:v})); }
 lineChart(document.getElementById("chart-gold"), dailyLast(D.caixa_gold), {color:"var(--gold)",fy:v=>kk(v).replace(",00",""),label:"Saldo do caixa de Gold por dia",dots:true});
 lineChart(document.getElementById("chart-coins"), dailyLast(D.caixa_coins), {color:"#9fb4ff",fy:v=>fmt(v),label:"Saldo do caixa de Coins por dia",dots:true});
@@ -589,6 +611,7 @@ function extrato(rows, fv, hasCat){
 document.getElementById("ext-gold").innerHTML = extrato(D.caixa_gold, kk, true);
 document.getElementById("ext-coins").innerHTML = extrato(D.caixa_coins, fmt, false);
 
+}
 /* ---------- SHELTONS ---------- */
 document.getElementById("sh-types").innerHTML = SH.map((s,i)=>{
   const dev=sum(cobr.map(o=>o.sh_dev[i])), rec=sum(cobr.map(o=>Math.min(o.sh_dev[i],o.sh_rec[i])));
@@ -614,6 +637,7 @@ document.getElementById("sh-doacoes").innerHTML = doa.length
   : `<p class="muted small" style="padding:12px">Nenhuma doação de Sheltons registrada.</p>`;
 
 /* ---------- BLESS CASTLE ---------- */
+function renderBC(){
 const eds = [...new Set(D.bc.map(b=>b.data))].sort();
 const elenco = ativos.filter(m=>m.cla==="PHOENIX");
 const ptsOf = (id,ed) => sum(D.bc.filter(b=>b.chave===id && b.data===ed).map(b=>b.pontos));
@@ -644,7 +668,9 @@ document.getElementById("bc-elenco").innerHTML = `<table><thead><tr><th>Player</
   rowsEl.map(r=>{ const [f,c]=faixa(r.n,r.med); return `<tr><td><b>${esc(r.m.nick)}</b> <span class="small muted">${esc(r.m.classe)}</span></td>${r.v.map(x=>`<td class="r">${x?fmt(x):'<span class="muted">–</span>'}</td>`).join("")}<td class="r">${r.n}</td><td class="r"><b>${r.n?fmt(r.med):"–"}</b></td><td>${spark(r.v)}</td><td><span class="faixa ${c}">${f}</span></td></tr>`;}).join("")
 }<tr><td><b>Média do elenco</b></td>${mediaEd.map(e=>`<td class="r"><b>${e.n?fmt(e.y):"–"}</b></td>`).join("")}<td colspan="4"></td></tr></tbody></table>`;
 
+}
 /* ---------- DUNGEON ---------- */
+function renderDG(){
 document.getElementById("buff").innerHTML = [["+15%","Taxa de drop"],["+10%","Dano em bosses"],["+5%","HP"],["+5%","Mana"],["+5%","Resistência"],["+1","Velocidade"]]
   .map(([v,l])=>`<div class="card"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
 const dgs = new Map(); D.dg.forEach(r=>{ const k=r.data+"|"+r.cla; if(!dgs.has(k)) dgs.set(k,[]); dgs.get(k).push(r); });
@@ -659,6 +685,56 @@ const freq = ativos.map(m=>{ const tot=dgCla(m.cla); const pres=new Set(D.dg.fil
   .sort((a,b)=> (a.m.cla===b.m.cla?0:(a.m.cla==="HYDRA"?-1:1)) || ((b.p??-1)-(a.p??-1)) || a.m.nick.localeCompare(b.m.nick,"pt-BR",{sensitivity:"base"}));
 document.getElementById("dg-freq").innerHTML = `<table><thead><tr><th>Player</th><th>Clã</th><th class="r">Foi</th><th class="r">DGs do clã</th><th>Situação</th></tr></thead><tbody>${
   freq.map(f=>`<tr><td><b>${esc(f.m.nick)}</b></td><td><span class="clan ${esc(f.m.cla)}">${esc(f.m.cla)}</span></td><td class="r">${f.pres}</td><td class="r">${f.tot}</td><td><span class="faixa ${f.sit[1]}">${f.sit[0]}</span></td></tr>`).join("")}</tbody></table>`;
+
+}
+
+/* ---------- ÁREA PROTEGIDA (Caixas, Bless Castle, Dungeon) ---------- */
+const LOCK_IDS=["caixas","bless-castle","dungeon"];
+const SKEY="phx-sec-key";
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function showSecret(sec){
+  Object.assign(D,sec);
+  gSaldo = D.caixa_gold.at(-1)?.saldo ?? 0; cSaldo = D.caixa_coins.at(-1)?.saldo ?? 0;
+  renderTiles(); renderCaixas(); renderBC(); renderDG();
+  LOCK_IDS.forEach(id=>{const s=document.getElementById(id); s.querySelectorAll(".lk-hide").forEach(e=>e.classList.remove("lk-hide")); s.querySelector(".lockbox")?.remove();});
+  document.querySelectorAll("nav .lk").forEach(e=>e.remove());
+}
+async function decryptWith(raw){
+  const key=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["decrypt"]);
+  const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64d(ENC.iv)},key,b64d(ENC.ct));
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+async function deriveRaw(pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:b64d(ENC.salt),iterations:ENC.iter,hash:"SHA-256"},base,256));
+}
+if(!ENC){ showSecret({}); }
+else{
+  LOCK_IDS.forEach(id=>{
+    const s=document.getElementById(id);
+    [...s.children].forEach(c=>{ if(!c.classList.contains("sec-head")) c.classList.add("lk-hide"); });
+    const box=document.createElement("form");
+    box.className="card lockbox"; box.autocomplete="off";
+    box.innerHTML=`<div class="lk-ico" aria-hidden="true">🔒</div><div class="lk-t">Área protegida</div><p>Esta seção é exclusiva dos membros. Digite a senha do clã para ver Caixas, Bless Castle e Dungeon.</p>
+      <label class="lk-l" for="pw-${id}">Senha</label>
+      <div class="lk-row"><input id="pw-${id}" type="password" required><button type="submit">Desbloquear</button></div>
+      <label class="lk-rem"><input id="rem-${id}" type="checkbox"> Lembrar neste aparelho</label><div class="lk-err" role="alert"></div>`;
+    s.querySelector(".sec-head").after(box);
+    box.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const btn=box.querySelector("button"), err=box.querySelector(".lk-err");
+      btn.disabled=true; btn.textContent="Verificando…"; err.textContent="";
+      try{
+        const raw=await deriveRaw(box.querySelector("input[type=password]").value);
+        const sec=await decryptWith(raw);
+        if(box.querySelector(".lk-rem input").checked){ try{localStorage.setItem(SKEY,JSON.stringify({salt:ENC.salt,k:btoa(String.fromCharCode(...raw))}))}catch(_){} }
+        showSecret(sec);
+      }catch(x){ err.textContent="Senha incorreta. Tente de novo."; btn.disabled=false; btn.textContent="Desbloquear"; }
+    });
+  });
+  document.querySelectorAll('nav a[href="#caixas"],nav a[href="#bless-castle"],nav a[href="#dungeon"]').forEach(a=>a.insertAdjacentHTML("beforeend",' <span class="lk" aria-label="protegido">🔒</span>'));
+  (async()=>{try{const v=localStorage.getItem(SKEY); if(v){const o=JSON.parse(v); if(o.salt===ENC.salt){showSecret(await decryptWith(b64d(o.k)));} else localStorage.removeItem(SKEY);}}catch(e){try{localStorage.removeItem(SKEY)}catch(_){}}})();
+}
 
 /* ---------- REGRAS / RODAPÉ ---------- */
 document.getElementById("regra-mens").innerHTML = `<li><b>${fmt(D.config.gold)}kk de Gold</b> por membro.</li><li><b>${fmt(D.config.sheltons)} de cada Shelton</b>: ${SH.join(", ")}.</li><li><b>${fmt(D.config.coins_phoenix)} Coins</b>, só para membros da PHOENIX.</li><li>Prazo e cobrança são definidos pela liderança a cada mês.</li>`;
